@@ -258,6 +258,42 @@ export const calculators: CalculatorConfig[] = [
   // ─── MATHEMATICS ─────────────────────────────────────────
   {
     meta: {
+      slug: 'universal-calculator',
+      title: 'Universal Calculator - Math, Units & Engineering Expressions',
+      shortTitle: 'Universal',
+      description:
+        'Free universal calculator for math expressions, units, trigonometry, factorials, powers, roots, and engineering-style calculations using natural typed input.',
+      category: 'mathematics',
+      icon: '∑',
+      keywords: ['universal calculator', 'mathjs', 'units calculator', 'engineering calculator'],
+      new: true,
+    },
+    formula: 'Evaluate expressions, units, trig, powers, roots, and factorials',
+    formulaExplanation:
+      'The universal calculator accepts typed mathematical expressions and evaluates them directly. It supports arithmetic, constants, trigonometric functions, powers, roots, factorials, and compatible unit arithmetic such as adding meters and centimeters.',
+    exampleUsage:
+      'Try 2 + 3 * sin(45 deg), 5 m + 30 cm, sqrt(144), 2^10, or 10! to quickly evaluate common mathematical and engineering expressions.',
+    faqs: [
+      {
+        question: 'What can the universal calculator evaluate?',
+        answer:
+          'It can evaluate arithmetic, trigonometry, powers, roots, factorials, constants, and supported unit expressions. It is useful when a calculation does not fit one of the specialized tools.',
+      },
+      {
+        question: 'Can I use engineering units?',
+        answer:
+          'Yes. Compatible units such as m and cm can be combined, and the result is returned with units where appropriate.',
+      },
+    ],
+    relatedSlugs: [
+      'scientific-calculator',
+      'log-calculator',
+      'binary-hex-decimal-converter',
+      'energy-calculator',
+    ],
+  },
+  {
+    meta: {
       slug: 'scientific-calculator',
       title: 'Free Online Scientific Calculator – Advanced Math Functions',
       shortTitle: 'Scientific Calculator',

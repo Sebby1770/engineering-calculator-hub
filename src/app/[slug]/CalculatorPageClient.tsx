@@ -21,6 +21,7 @@ import WavelengthCalc from '@/components/calculators/WavelengthCalc';
 import DbToVoltageCalc from '@/components/calculators/DbToVoltageCalc';
 import VoltageToDbCalc from '@/components/calculators/VoltageToDbCalc';
 import FreqPeriodCalc from '@/components/calculators/FreqPeriodCalc';
+import UniversalCalculator from '@/components/calculators/UniversalCalculator';
 
 const CALCULATOR_MAP: Record<string, React.ComponentType<{ onResult: (r: string) => void }>> = {
   'ohms-law-calculator': OhmsLawCalc,
@@ -39,6 +40,7 @@ const CALCULATOR_MAP: Record<string, React.ComponentType<{ onResult: (r: string)
   'db-to-voltage-converter': DbToVoltageCalc,
   'voltage-to-db-converter': VoltageToDbCalc,
   'frequency-to-period-converter': FreqPeriodCalc,
+  'universal-calculator': UniversalCalculator,
 };
 
 export default function CalculatorPageClient({ slug }: { slug: string }) {
