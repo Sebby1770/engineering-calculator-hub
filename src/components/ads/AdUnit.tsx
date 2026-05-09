@@ -5,6 +5,12 @@ import { AD_CONFIG } from '@/lib/adConfig';
 
 type AdSize = 'banner' | 'sidebar' | 'inContent' | 'footer' | 'betweenCards';
 
+declare global {
+  interface Window {
+    adsbygoogle?: Record<string, unknown>[];
+  }
+}
+
 interface AdUnitProps {
   size: AdSize;
   className?: string;
@@ -43,7 +49,8 @@ export default function AdUnit({ size, className = '' }: AdUnitProps) {
     if (!isVisible || !AD_CONFIG.enabled) return;
     try {
       if (AD_CONFIG.provider === 'adsense') {
-        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+        window.adsbygoogle = window.adsbygoogle || [];
+        window.adsbygoogle.push({});
       }
     } catch (e) {
       console.error('Ad loading error:', e);
@@ -54,6 +61,8 @@ export default function AdUnit({ size, className = '' }: AdUnitProps) {
 
   // Placeholder shown when ads are not enabled
   if (!AD_CONFIG.enabled) {
+    if (!AD_CONFIG.showPlaceholders) return null;
+
     return (
       <div
         ref={adRef}

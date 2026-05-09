@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { calculators, getPopularCalculators } from '@/data/calculators';
 import { categories } from '@/data/categories';
@@ -10,18 +10,17 @@ import { AdBanner, AdInContent, AdBetweenCards } from '@/components/ads';
 export default function HomePage() {
   const [search, setSearch] = useState('');
   const popular = getPopularCalculators();
+  const trimmedSearch = search.trim().toLowerCase();
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return null;
-    const q = search.toLowerCase();
-    return calculators.filter(
-      (c) =>
-        c.meta.title.toLowerCase().includes(q) ||
-        c.meta.shortTitle.toLowerCase().includes(q) ||
-        c.meta.keywords.some((k) => k.includes(q)) ||
-        c.meta.description.toLowerCase().includes(q)
-    );
-  }, [search]);
+  const filtered = trimmedSearch
+    ? calculators.filter(
+        (c) =>
+          c.meta.title.toLowerCase().includes(trimmedSearch) ||
+          c.meta.shortTitle.toLowerCase().includes(trimmedSearch) ||
+          c.meta.keywords.some((k) => k.toLowerCase().includes(trimmedSearch)) ||
+          c.meta.description.toLowerCase().includes(trimmedSearch)
+      )
+    : null;
 
   return (
     <div>

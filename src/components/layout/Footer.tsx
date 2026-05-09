@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { calculators } from '@/data/calculators';
 import { categories } from '@/data/categories';
 import { AdFooter } from '@/components/ads';
+import SupportCheckoutButton from '@/components/billing/SupportCheckoutButton';
 
 export default function Footer() {
   return (
@@ -23,6 +24,9 @@ export default function Footer() {
             <p className="text-sm text-surface-500 dark:text-surface-400 leading-relaxed">
               Free engineering calculators for students, engineers, and professionals. Fast, accurate, and easy to use.
             </p>
+            <div className="mt-4">
+              <SupportCheckoutButton />
+            </div>
           </div>
 
           {/* Category links */}

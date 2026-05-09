@@ -1,13 +1,14 @@
 # Engineering Calculator Hub
 
-A modern, SEO-optimized engineering calculator website built with Next.js 14, designed for passive income via ad revenue. Features 16 fully interactive calculators across 5 categories with complete SEO optimization, ad placements, and scalable architecture.
+A modern, SEO-optimized engineering calculator website built with Next.js, designed for passive income via ad revenue and optional Stripe Checkout support. Features 16 fully interactive calculators across 5 categories with SEO optimization, ad placements, and scalable architecture.
 
 ## Tech Stack
 
-- **Next.js 14** (App Router) with static generation
+- **Next.js** (App Router) with static prerendered calculator pages
 - **TypeScript** for type safety
 - **Tailwind CSS** for styling
 - **Dark/Light mode** with system preference detection
+- **Stripe Checkout** optional server-side integration
 
 ## Features
 
@@ -62,11 +63,14 @@ npm install
 # Run development server
 npm run dev
 
+# Run all local checks
+npm run check
+
 # Build for production
 npm run build
 
-# Preview production build
-npx serve out
+# Preview production build after running build
+npm run start
 ```
 
 ## Project Structure
@@ -80,6 +84,14 @@ src/
 │   ├── sitemap.ts          # Auto-generated sitemap
 │   ├── robots.ts           # Auto-generated robots.txt
 │   ├── not-found.tsx       # 404 page
+│   ├── about/              # About page
+│   ├── privacy/            # Privacy policy
+│   ├── terms/              # Terms of use
+│   ├── checkout/           # Stripe success/cancel pages
+│   ├── api/
+│   │   ├── checkout/       # Stripe Checkout session route
+│   │   ├── stripe/webhook/ # Stripe webhook receiver
+│   │   └── health/         # Health check
 │   └── [slug]/
 │       ├── page.tsx        # Dynamic calculator page (SSG + metadata)
 │       └── CalculatorPageClient.tsx  # Client component router
@@ -108,7 +120,8 @@ src/
 │   ├── calculators.ts      # All calculator configs, FAQs, formulas
 │   └── categories.ts       # Category definitions
 ├── lib/
-│   └── adConfig.ts         # Ad provider configuration
+│   ├── adConfig.ts         # Environment-based ad provider configuration
+│   └── site.ts             # Canonical site URL helpers
 └── types/
     └── index.ts            # TypeScript types
 ```
@@ -160,32 +173,58 @@ That's it! The page, routing, SEO metadata, sitemap entry, and footer link are a
 
 ## Enabling Ads
 
-Edit `src/lib/adConfig.ts`:
+Set these in Vercel or `.env.local`:
 
-```typescript
-export const AD_CONFIG = {
-  provider: 'adsense',
-  enabled: true,  // ← flip to true
-  adsense: {
-    publisherId: 'ca-pub-YOUR_REAL_ID',
-    slots: {
-      banner: 'YOUR_SLOT_ID',
-      sidebar: 'YOUR_SLOT_ID',
-      // ...
-    },
-  },
-};
+```bash
+NEXT_PUBLIC_AD_ENABLED=true
+NEXT_PUBLIC_AD_PROVIDER=adsense
+NEXT_PUBLIC_ADSENSE_PUBLISHER_ID=ca-pub-YOUR_REAL_ID
+NEXT_PUBLIC_ADSENSE_BANNER_SLOT=YOUR_SLOT_ID
+NEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT=YOUR_SLOT_ID
+NEXT_PUBLIC_ADSENSE_IN_CONTENT_SLOT=YOUR_SLOT_ID
+NEXT_PUBLIC_ADSENSE_FOOTER_SLOT=YOUR_SLOT_ID
+NEXT_PUBLIC_ADSENSE_BETWEEN_CARDS_SLOT=YOUR_SLOT_ID
 ```
+
+Ads stay hidden until the required provider IDs are present. In development, ad placeholders are shown by default; set `NEXT_PUBLIC_AD_PLACEHOLDERS=false` to hide them.
+
+## Enabling Stripe Checkout
+
+1. Create a product and price in Stripe.
+2. Add these environment variables in Vercel:
+
+```bash
+NEXT_PUBLIC_STRIPE_ENABLED=true
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_PRICE_ID=price_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+3. Point the Stripe webhook endpoint to:
+
+```text
+https://YOUR_DOMAIN/api/stripe/webhook
+```
+
+The support button is hidden unless `NEXT_PUBLIC_STRIPE_ENABLED=true`. Checkout creation still fails safely unless both `STRIPE_SECRET_KEY` and `STRIPE_PRICE_ID` are configured.
 
 ## Deployment
 
-Recommended: **Vercel** (zero-config for Next.js)
+Recommended: **Vercel**.
 
 ```bash
-npm run build   # Generates static export in /out
+npm install
+npm run check
+npx vercel --prod
 ```
 
-Also works with Netlify, Cloudflare Pages, or any static host.
+Required production environment variables:
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://engineeringcalculatorhub.com
+```
+
+Add the ad and Stripe variables above when those services are ready. The project includes `vercel.json` so Vercel uses `npm install`, `npm run build`, and the Next.js framework preset.
 
 ## SEO Checklist
 

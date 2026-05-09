@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CalcSelect from '@/components/ui/CalcSelect';
 
 const COLORS = [
@@ -41,6 +41,10 @@ export default function ResistorColorCodeCalc({ onResult }: { onResult: (r: stri
 
   const colorOpts = COLORS.map((c) => ({ value: String(c.value), label: c.name }));
   const tolOpts = TOLERANCE.map((t) => ({ value: String(t.value), label: t.name }));
+
+  useEffect(() => {
+    onResult(result);
+  }, [onResult, result]);
 
   return (
     <div>

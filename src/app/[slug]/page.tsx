@@ -1,7 +1,12 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { calculators, getCalculatorBySlug } from '@/data/calculators';
+import { absoluteUrl } from '@/lib/site';
 import CalculatorPageClient from './CalculatorPageClient';
+
+type CalculatorPageProps = {
+  params: Promise<{ slug: string }>;
+};
 
 // Static generation for all calculator pages
 export function generateStaticParams() {
@@ -9,11 +14,14 @@ export function generateStaticParams() {
 }
 
 // Dynamic SEO metadata per calculator
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const config = getCalculatorBySlug(params.slug);
+export async function generateMetadata({ params }: CalculatorPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const config = getCalculatorBySlug(slug);
   if (!config) return {};
 
   const { meta } = config;
+  const pageUrl = absoluteUrl(`/${meta.slug}`);
+
   return {
     title: meta.title,
     description: meta.description,
@@ -21,7 +29,7 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://engineeringcalculatorhub.com/${meta.slug}`,
+      url: pageUrl,
       type: 'website',
     },
     twitter: {
@@ -30,14 +38,16 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
       description: meta.description,
     },
     alternates: {
-      canonical: `https://engineeringcalculatorhub.com/${meta.slug}`,
+      canonical: pageUrl,
     },
   };
 }
 
-export default function CalculatorPage({ params }: { params: { slug: string } }) {
-  const config = getCalculatorBySlug(params.slug);
+export default async function CalculatorPage({ params }: CalculatorPageProps) {
+  const { slug } = await params;
+  const config = getCalculatorBySlug(slug);
   if (!config) notFound();
+  const pageUrl = absoluteUrl(`/${config.meta.slug}`);
 
   // JSON-LD structured data for SEO
   const jsonLd = {
@@ -45,7 +55,7 @@ export default function CalculatorPage({ params }: { params: { slug: string } })
     '@type': 'WebApplication',
     name: config.meta.title,
     description: config.meta.description,
-    url: `https://engineeringcalculatorhub.com/${config.meta.slug}`,
+    url: pageUrl,
     applicationCategory: 'UtilityApplication',
     operatingSystem: 'Any',
     offers: {
@@ -77,12 +87,12 @@ export default function CalculatorPage({ params }: { params: { slug: string } })
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://engineeringcalculatorhub.com' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: absoluteUrl('/') },
       {
         '@type': 'ListItem',
         position: 2,
         name: config.meta.shortTitle,
-        item: `https://engineeringcalculatorhub.com/${config.meta.slug}`,
+        item: pageUrl,
       },
     ],
   };
@@ -101,7 +111,7 @@ export default function CalculatorPage({ params }: { params: { slug: string } })
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <CalculatorPageClient slug={params.slug} />
+      <CalculatorPageClient slug={slug} />
     </>
   );
 }
