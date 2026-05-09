@@ -1,9 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  trailingSlash: false,
   images: {
     unoptimized: true,
+  },
+  turbopack: {
+    root: __dirname,
   },
   compress: true,
   poweredByHeader: false,

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
 import { categories } from '@/data/categories';
+import SupportCheckoutButton from '@/components/billing/SupportCheckoutButton';
 
 export default function Header() {
   const { theme, toggle } = useTheme();
@@ -39,6 +40,10 @@ export default function Header() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            <div className="hidden sm:block">
+              <SupportCheckoutButton compact />
+            </div>
+
             {/* Theme toggle */}
             <button
               onClick={toggle}

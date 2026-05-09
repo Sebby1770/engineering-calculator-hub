@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import CalcInput from '@/components/ui/CalcInput';
 
 export default function BaseConverterCalc({ onResult }: { onResult: (r: string) => void }) {
   const [decimal, setDecimal] = useState('');

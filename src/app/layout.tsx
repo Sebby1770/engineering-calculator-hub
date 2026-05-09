@@ -1,12 +1,19 @@
 import type { Metadata } from 'next';
+import { DM_Sans, IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { AD_CONFIG } from '@/lib/adConfig';
+import { getSiteUrl } from '@/lib/site';
 import './globals.css';
 
+const siteUrl = getSiteUrl();
+const displayFont = DM_Sans({ subsets: ['latin'], variable: '--font-display' });
+const bodyFont = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-body' });
+const monoFont = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '600'], variable: '--font-mono' });
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://engineeringcalculatorhub.com'),
+  metadataBase: new URL(siteUrl),
   title: {
     default: 'Engineering Calculator Hub – Free Online Engineering Calculators',
     template: '%s | Engineering Calculator Hub',
@@ -26,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://engineeringcalculatorhub.com',
+    url: siteUrl,
     siteName: 'Engineering Calculator Hub',
     title: 'Engineering Calculator Hub – Free Online Engineering Calculators',
     description:
@@ -42,20 +49,17 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, 'max-snippet': -1, 'max-image-preview': 'large' },
   },
-  alternates: { canonical: 'https://engineeringcalculatorhub.com' },
+  alternates: { canonical: siteUrl },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable}`}
+    >
       <head>
-        {/* Fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..800;1,9..40,300..800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap"
-          rel="stylesheet"
-        />
         {/* AdSense — only loaded when enabled */}
         {AD_CONFIG.enabled && AD_CONFIG.provider === 'adsense' && (
           <script

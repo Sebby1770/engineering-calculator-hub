@@ -22,7 +22,7 @@ export default function ScientificCalc({ onResult }: { onResult: (r: string) => 
 
   const evaluate = () => {
     try {
-      let expr = display
+      const expr = display
         .replace(/×/g, '*')
         .replace(/÷/g, '/')
         .replace(/π/g, String(Math.PI))
