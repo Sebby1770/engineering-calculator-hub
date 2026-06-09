@@ -73,6 +73,38 @@ npm run build
 npm run start
 ```
 
+## Native Mac App
+
+A SwiftUI Mac version lives in `macOS/`. It includes a bundled hero image plus all native calculator tools from the web app:
+
+- Ohm's Law
+- Power
+- Voltage Divider
+- Resistor Color Code
+- RC Time Constant
+- Series Resistors
+- Parallel Resistors
+- Universal
+- Scientific
+- Logarithms
+- Base Converter
+- Energy
+- Frequency
+- Wavelength
+- dB to Voltage
+- Voltage to dB
+- Frequency and Period
+
+Build and run it with Xcode:
+
+```bash
+cd macOS
+xcodegen generate
+open EngineeringCalculatorHubMac.xcodeproj
+```
+
+The runnable scheme is `EngineeringCalculatorHubMac`.
+
 ## Project Structure
 
 ```

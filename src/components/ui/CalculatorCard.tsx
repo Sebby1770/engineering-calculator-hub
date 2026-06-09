@@ -5,7 +5,7 @@ export default function CalculatorCard({ meta }: { meta: CalculatorMeta }) {
   return (
     <Link
       href={`/${meta.slug}`}
-      className="group relative flex flex-col rounded-xl border border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-5 hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-lg hover:shadow-brand-500/5 transition-all duration-200"
+      className="group relative flex flex-col rounded-lg border border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-5 hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-lg hover:shadow-brand-500/5 transition-all duration-200"
     >
       {meta.new && (
         <span className="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400">
