@@ -4,7 +4,13 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
 import { categories } from '@/data/categories';
+import { calculators } from '@/data/calculators';
 import SupportCheckoutButton from '@/components/billing/SupportCheckoutButton';
+
+// Only link to categories that actually have calculators.
+const navCategories = categories.filter((cat) =>
+  calculators.some((calc) => calc.meta.category === cat.id)
+);
 
 export default function Header() {
   const { theme, toggle } = useTheme();
@@ -26,7 +32,7 @@ export default function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-1">
-            {categories.map((cat) => (
+            {navCategories.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/#${cat.id}`}
@@ -77,7 +83,7 @@ export default function Header() {
         {/* Mobile menu */}
         {mobileOpen && (
           <nav className="lg:hidden py-4 border-t border-surface-200 dark:border-surface-800 animate-fade-in">
-            {categories.map((cat) => (
+            {navCategories.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/#${cat.id}`}

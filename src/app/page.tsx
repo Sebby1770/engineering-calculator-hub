@@ -1,203 +1,233 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import { calculators, getPopularCalculators } from '@/data/calculators';
 import { categories } from '@/data/categories';
 import CalculatorCard from '@/components/ui/CalculatorCard';
-import { AdBanner, AdInContent, AdBetweenCards } from '@/components/ads';
+import { AdBanner } from '@/components/ads';
+import type { CalculatorConfig, Category } from '@/types';
+
+type CategoryFilter = 'all' | Category;
+
+function matchesSearch(calculator: CalculatorConfig, query: string) {
+  const haystack = [
+    calculator.meta.title,
+    calculator.meta.shortTitle,
+    calculator.meta.description,
+    calculator.formula,
+    ...calculator.meta.keywords,
+  ]
+    .join(' ')
+    .toLowerCase();
+
+  return haystack.includes(query);
+}
 
 export default function HomePage() {
-  const [search, setSearch] = useState('');
   const popular = getPopularCalculators();
+  const [search, setSearch] = useState('');
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const trimmedSearch = search.trim().toLowerCase();
 
-  const filtered = trimmedSearch
-    ? calculators.filter(
-        (c) =>
-          c.meta.title.toLowerCase().includes(trimmedSearch) ||
-          c.meta.shortTitle.toLowerCase().includes(trimmedSearch) ||
-          c.meta.keywords.some((k) => k.toLowerCase().includes(trimmedSearch)) ||
-          c.meta.description.toLowerCase().includes(trimmedSearch)
-      )
-    : null;
+  // Only show categories that actually contain calculators.
+  const populatedCategories = useMemo(
+    () => categories.filter((category) => calculators.some((c) => c.meta.category === category.id)),
+    []
+  );
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const category of categories) {
+      counts[category.id] = calculators.filter((c) => c.meta.category === category.id).length;
+    }
+    return counts;
+  }, []);
+
+  const filtered = useMemo(() => {
+    return calculators.filter((calculator) => {
+      const categoryMatch = activeCategory === 'all' || calculator.meta.category === activeCategory;
+      const searchMatch = !trimmedSearch || matchesSearch(calculator, trimmedSearch);
+      return categoryMatch && searchMatch;
+    });
+  }, [activeCategory, trimmedSearch]);
+
+  const isFiltering = trimmedSearch !== '' || activeCategory !== 'all';
+
+  const resetFilters = () => {
+    setSearch('');
+    setActiveCategory('all');
+  };
 
   return (
-    <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b border-surface-200 dark:border-surface-800">
-        {/* Background decoration */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-400/10 dark:bg-brand-500/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-indigo-400/10 dark:bg-indigo-500/5 rounded-full blur-3xl" />
-        </div>
-
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800 text-brand-700 dark:text-brand-300 text-sm font-medium mb-6 animate-fade-in">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            {calculators.length} free calculators available
+    <div className="bg-white dark:bg-surface-950">
+      {/* Hero + search */}
+      <section className="border-b border-surface-200 bg-surface-50 dark:border-surface-800 dark:bg-surface-950">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+            <span className="rounded-md border border-brand-200 bg-white px-2.5 py-1 font-medium text-brand-700 dark:border-brand-800 dark:bg-surface-900 dark:text-brand-300">
+              {calculators.length} calculators
+            </span>
+            <span className="rounded-md border border-surface-200 bg-white px-2.5 py-1 text-surface-600 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300">
+              {populatedCategories.length} engineering categories
+            </span>
           </div>
 
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-surface-900 dark:text-white mb-4 animate-slide-up">
-            Engineering Calculator
-            <span className="text-brand-500"> Hub</span>
+          <h1 className="font-display text-4xl font-bold tracking-normal text-surface-950 dark:text-white sm:text-5xl">
+            Engineering Calculator Hub
           </h1>
-
-          <p className="text-lg sm:text-xl text-surface-600 dark:text-surface-400 max-w-2xl mx-auto mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            Free, fast, and accurate calculators for electrical engineering, physics, mathematics, and unit conversions.
+          <p className="mt-4 max-w-3xl text-lg text-surface-600 dark:text-surface-300">
+            Pick a calculator below to open it on its own page. Fast tools for circuits, signals,
+            physics, conversions, and daily engineering checks.
           </p>
 
-          {/* Search */}
-          <div className="max-w-xl mx-auto animate-slide-up" style={{ animationDelay: '0.2s' }}>
+          <div className="mt-6 max-w-3xl">
+            <label htmlFor="calculator-search" className="sr-only">
+              Search calculators
+            </label>
             <div className="relative">
               <svg
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400"
+                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-400"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
+                aria-hidden="true"
               >
                 <circle cx="11" cy="11" r="8" />
                 <path d="M21 21l-4.35-4.35" />
               </svg>
               <input
+                id="calculator-search"
                 type="text"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search calculators... (e.g. ohms law, voltage divider)"
-                className="w-full rounded-xl border border-surface-300 dark:border-surface-700 bg-white dark:bg-surface-900 pl-12 pr-4 py-4 text-base outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-200 dark:focus:ring-brand-800 transition-all shadow-sm"
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by formula, unit, or calculator name"
+                className="w-full rounded-lg border border-surface-300 bg-white py-4 pl-12 pr-4 text-base shadow-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-surface-700 dark:bg-surface-900 dark:focus:ring-brand-900"
               />
             </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2" aria-label="Category filters">
+            <button
+              type="button"
+              onClick={() => setActiveCategory('all')}
+              aria-pressed={activeCategory === 'all'}
+              className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
+                activeCategory === 'all'
+                  ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
+                  : 'border-surface-200 bg-white text-surface-600 hover:border-brand-300 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300'
+              }`}
+            >
+              All
+            </button>
+            {populatedCategories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => setActiveCategory(category.id)}
+                aria-pressed={activeCategory === category.id}
+                className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
+                  activeCategory === category.id
+                    ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
+                    : 'border-surface-200 bg-white text-surface-600 hover:border-brand-300 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300'
+                }`}
+              >
+                {category.name} ({categoryCounts[category.id]})
+              </button>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Search results */}
-      {filtered !== null && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-          <h2 className="font-display text-xl font-bold text-surface-900 dark:text-white mb-4">
-            {filtered.length} result{filtered.length !== 1 ? 's' : ''} for &ldquo;{search}&rdquo;
-          </h2>
-          {filtered.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map((c) => (
-                <CalculatorCard key={c.meta.slug} meta={c.meta} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-surface-500 dark:text-surface-400">
-              No calculators found. Try a different search term.
-            </p>
-          )}
-        </section>
-      )}
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <AdBanner />
+      </section>
 
-      {/* Rest of page (hidden during search) */}
-      {filtered === null && (
-        <>
-          {/* Top banner ad */}
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8">
-            <AdBanner />
-          </div>
-
-          {/* Popular calculators */}
-          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-display text-2xl font-bold text-surface-900 dark:text-white">
-                ⚡ Popular Calculators
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {popular.map((c) => (
-                <CalculatorCard key={c.meta.slug} meta={c.meta} />
-              ))}
-            </div>
-          </section>
-
-          {/* Categories grid */}
-          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-12">
-            <h2 className="font-display text-2xl font-bold text-surface-900 dark:text-white mb-6">
-              Browse by Category
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-              {categories.map((cat) => (
-                <Link
-                  key={cat.id}
-                  href={`/#${cat.id}`}
-                  className="group rounded-xl border border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-5 hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-lg transition-all"
-                >
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-2xl text-white mb-3`}>
-                    {cat.icon}
-                  </div>
-                  <h3 className="font-display font-semibold text-surface-900 dark:text-white mb-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                    {cat.name}
-                  </h3>
-                  <p className="text-sm text-surface-500 dark:text-surface-400 line-clamp-2">
-                    {cat.description}
-                  </p>
-                  <span className="text-xs text-surface-400 dark:text-surface-500 mt-2 block">
-                    {calculators.filter((c) => c.meta.category === cat.id).length} calculators
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          <AdInContent />
-
-          {/* All calculators by category */}
-          {categories.map((cat, catIdx) => (
-            <section key={cat.id} id={cat.id} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center text-lg text-white`}>
-                  {cat.icon}
-                </div>
-                <div>
-                  <h2 className="font-display text-xl font-bold text-surface-900 dark:text-white">
-                    {cat.name}
-                  </h2>
-                  <p className="text-sm text-surface-500 dark:text-surface-400">{cat.description}</p>
-                </div>
+      {/* Listing */}
+      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+        {isFiltering ? (
+          <>
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-brand-600 dark:text-brand-400">
+                  {filtered.length} matching {filtered.length === 1 ? 'calculator' : 'calculators'}
+                </p>
+                <h2 className="font-display text-2xl font-bold text-surface-950 dark:text-white">
+                  Search results
+                </h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {calculators
-                  .filter((c) => c.meta.category === cat.id)
-                  .map((c) => (
-                    <CalculatorCard key={c.meta.slug} meta={c.meta} />
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="rounded-md border border-surface-300 px-3 py-2 text-sm text-surface-600 hover:bg-surface-50 dark:border-surface-700 dark:text-surface-300 dark:hover:bg-surface-900"
+              >
+                Clear
+              </button>
+            </div>
+
+            {filtered.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {filtered.map((calculator) => (
+                  <CalculatorCard key={calculator.meta.slug} meta={calculator.meta} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-surface-300 bg-surface-50 p-8 text-center dark:border-surface-700 dark:bg-surface-900">
+                <h3 className="font-display text-lg font-bold text-surface-950 dark:text-white">
+                  No matching calculators
+                </h3>
+                <p className="mt-2 text-sm text-surface-500 dark:text-surface-400">
+                  Try a broader formula, unit, or category search.
+                </p>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="space-y-12">
+            {/* Popular */}
+            {popular.length > 0 && (
+              <div id="popular">
+                <h2 className="mb-4 font-display text-xl font-bold text-surface-950 dark:text-white">
+                  Popular calculators
+                </h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {popular.map((calculator) => (
+                    <CalculatorCard key={calculator.meta.slug} meta={calculator.meta} />
                   ))}
+                </div>
               </div>
-              {catIdx === 1 && <AdBetweenCards className="mt-6" />}
-            </section>
-          ))}
+            )}
 
-          {/* Bottom SEO text */}
-          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-12">
-            <div className="rounded-xl bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 p-6 sm:p-8">
-              <h2 className="font-display text-xl font-bold text-surface-900 dark:text-white mb-3">
-                About Engineering Calculator Hub
-              </h2>
-              <div className="text-surface-600 dark:text-surface-400 space-y-3 text-sm leading-relaxed">
-                <p>
-                  Engineering Calculator Hub provides free, fast, and accurate online calculators for
-                  engineering students, professionals, and hobbyists. Our tools cover electrical engineering
-                  fundamentals like Ohm&apos;s Law, voltage dividers, and resistor calculations, as well as
-                  physics, mathematics, and unit conversions.
-                </p>
-                <p>
-                  Every calculator includes detailed formula explanations, worked examples, and frequently
-                  asked questions to help you understand the underlying concepts. Whether you&apos;re studying
-                  for an exam, designing a circuit, or converting units, our tools give you instant, reliable
-                  results.
-                </p>
-                <p>
-                  All calculators are free to use with no registration required. They work on any device —
-                  desktop, tablet, or mobile. Results can be copied, shared, or saved for later reference.
-                </p>
+            {/* By category */}
+            {populatedCategories.map((category) => (
+              <div key={category.id} id={category.id} className="scroll-mt-24">
+                <div className="mb-4 flex items-center gap-3">
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${category.color} text-lg font-bold text-white`}
+                  >
+                    {category.icon}
+                  </div>
+                  <div>
+                    <h2 className="font-display text-xl font-bold text-surface-950 dark:text-white">
+                      {category.name}
+                    </h2>
+                    <p className="text-sm text-surface-500 dark:text-surface-400">
+                      {category.description}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {calculators
+                    .filter((calculator) => calculator.meta.category === category.id)
+                    .map((calculator) => (
+                      <CalculatorCard key={calculator.meta.slug} meta={calculator.meta} />
+                    ))}
+                </div>
               </div>
-            </div>
-          </section>
-        </>
-      )}
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

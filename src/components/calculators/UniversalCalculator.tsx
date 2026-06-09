@@ -10,6 +10,25 @@ math.config({
   precision: 20
 });
 
+// Harden mathjs against expression-based function injection (defense in depth).
+// This evaluator runs entirely client-side on the user's own input, but we still
+// disable the documented injection vectors so a typed expression can't redefine
+// functions or mutate the math instance.
+math.import(
+  {
+    import: function denied() {
+      throw new Error('import is disabled');
+    },
+    createUnit: function denied() {
+      throw new Error('createUnit is disabled');
+    },
+  },
+  { override: true }
+);
+
+// Reject absurdly long expressions before parsing (cheap DoS guard).
+const MAX_EXPRESSION_LENGTH = 1000;
+
 export default function UniversalCalculator({ onResult }: { onResult?: (result: string) => void }) {
   const [input, setInput] = useState('');
   const [result, setResult] = useState('');
@@ -30,6 +49,12 @@ export default function UniversalCalculator({ onResult }: { onResult?: (result: 
     const rawExpression = expression ?? inputRef.current?.value ?? input;
     const trimmedExpression = rawExpression.trim();
     if (!trimmedExpression) return;
+
+    if (trimmedExpression.length > MAX_EXPRESSION_LENGTH) {
+      setResult(`Expression is too long (max ${MAX_EXPRESSION_LENGTH} characters).`);
+      setIsError(true);
+      return;
+    }
 
     try {
       const evaluated = math.evaluate(trimmedExpression);

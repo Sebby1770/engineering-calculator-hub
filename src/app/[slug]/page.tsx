@@ -8,6 +8,12 @@ type CalculatorPageProps = {
   params: Promise<{ slug: string }>;
 };
 
+// Serialize JSON-LD for inline <script>, escaping "<" so the data can never break
+// out of the script element (defense in depth — the data here is static).
+function toJsonLd(data: unknown) {
+  return JSON.stringify(data).replace(/</g, '\\u003c');
+}
+
 // Static generation for all calculator pages
 export function generateStaticParams() {
   return calculators.map((c) => ({ slug: c.meta.slug }));
@@ -101,15 +107,15 @@ export default async function CalculatorPage({ params }: CalculatorPageProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLd(jsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLd(faqJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbJsonLd) }}
       />
       <CalculatorPageClient slug={slug} />
     </>
