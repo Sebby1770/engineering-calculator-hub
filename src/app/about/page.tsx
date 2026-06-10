@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { absoluteUrl } from '@/lib/site';
+import { calculators } from '@/data/calculators';
+import { categories } from '@/data/categories';
 
 export const metadata: Metadata = {
   title: 'About Engineering Calculator Hub',
@@ -9,10 +11,16 @@ export const metadata: Metadata = {
   alternates: { canonical: absoluteUrl('/about') },
 };
 
+const REPO_URL = 'https://github.com/Sebby1770/engineering-calculator-hub';
+
 export default function AboutPage() {
+  const populatedCategories = categories.filter((category) =>
+    calculators.some((calc) => calc.meta.category === category.id)
+  );
+
   return (
-    <main className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-      <div className="space-y-8">
+    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="space-y-10">
         <section>
           <p className="text-sm font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">
             About
@@ -20,40 +28,88 @@ export default function AboutPage() {
           <h1 className="mt-2 font-display text-3xl font-bold text-surface-900 dark:text-white">
             Engineering tools that stay quick and clear
           </h1>
-          <p className="mt-4 text-surface-600 dark:text-surface-400 leading-relaxed">
-            Engineering Calculator Hub is built for students, engineers, makers, and anyone who needs
-            dependable answers without digging through spreadsheets or bloated tools.
+          <p className="mt-4 leading-relaxed text-surface-600 dark:text-surface-400">
+            Engineering Calculator Hub is built for students, engineers, makers, and anyone who
+            needs dependable answers without digging through spreadsheets or bloated tools. Today
+            the library covers {calculators.length} calculators across{' '}
+            {populatedCategories.length} categories — every one with its formula, a worked example,
+            and FAQs.
           </p>
         </section>
 
         <section className="grid gap-4 sm:grid-cols-3">
           {[
-            ['Fast', 'Pages are optimized for quick loading and instant calculator feedback.'],
-            ['Useful', 'Each calculator includes formulas, examples, and practical reference notes.'],
-            ['Accessible', 'The tools are free to use and designed for phones, tablets, and desktops.'],
+            ['Fast', 'Every page is statically generated and the math runs instantly in your browser.'],
+            ['Private', 'No accounts, no tracking. What you type into a calculator never leaves your device.'],
+            ['Open', 'The entire site is open source under the MIT licence — read it, audit it, contribute.'],
           ].map(([title, body]) => (
-            <div key={title} className="rounded-lg border border-surface-200 dark:border-surface-800 p-5">
+            <div key={title} className="rounded-lg border border-surface-200 p-5 dark:border-surface-800">
               <h2 className="font-display font-semibold text-surface-900 dark:text-white">{title}</h2>
-              <p className="mt-2 text-sm text-surface-600 dark:text-surface-400">{body}</p>
+              <p className="mt-2 text-sm leading-relaxed text-surface-600 dark:text-surface-400">{body}</p>
             </div>
           ))}
         </section>
 
-        <section className="rounded-lg bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 p-6">
+        <section>
           <h2 className="font-display text-xl font-bold text-surface-900 dark:text-white">
-            Start calculating
+            What&apos;s inside
           </h2>
-          <p className="mt-2 text-surface-600 dark:text-surface-400">
-            Browse the full library of electrical, physics, math, signal, and conversion calculators.
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {populatedCategories.map((category) => {
+              const count = calculators.filter((c) => c.meta.category === category.id).length;
+              return (
+                <Link
+                  key={category.id}
+                  href={`/#${category.id}`}
+                  className="flex items-center gap-3 rounded-lg border border-surface-200 p-4 transition-colors hover:border-brand-300 dark:border-surface-800 dark:hover:border-brand-700"
+                >
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${category.color} text-lg font-bold text-white`}
+                  >
+                    {category.icon}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-display font-semibold text-surface-900 dark:text-white">
+                      {category.name}
+                    </p>
+                    <p className="text-sm text-surface-500 dark:text-surface-400">
+                      {count} {count === 1 ? 'calculator' : 'calculators'}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-surface-200 bg-surface-50 p-6 dark:border-surface-800 dark:bg-surface-900">
+          <h2 className="font-display text-xl font-bold text-surface-900 dark:text-white">
+            Help it grow
+          </h2>
+          <p className="mt-2 leading-relaxed text-surface-600 dark:text-surface-400">
+            Spotted a bug or missing a calculator you need? Send a note through the{' '}
+            <Link className="text-brand-600 hover:underline dark:text-brand-400" href="/feedback">
+              feedback form
+            </Link>{' '}
+            or open an issue on{' '}
+            <a
+              className="text-brand-600 hover:underline dark:text-brand-400"
+              href={REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub
+            </a>
+            . If the site saves you time, the Support button in the header lets you chip in.
           </p>
           <Link
             href="/"
-            className="mt-4 inline-flex rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
+            className="mt-4 inline-flex rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
           >
             View calculators
           </Link>
         </section>
       </div>
-    </main>
+    </div>
   );
 }

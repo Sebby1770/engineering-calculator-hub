@@ -61,6 +61,15 @@ export default function Footer() {
             <Link href="/privacy" className="hover:text-brand-500 transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-brand-500 transition-colors">Terms</Link>
             <Link href="/about" className="hover:text-brand-500 transition-colors">About</Link>
+            <Link href="/feedback" className="hover:text-brand-500 transition-colors">Feedback</Link>
+            <a
+              href="https://github.com/Sebby1770/engineering-calculator-hub"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-brand-500 transition-colors"
+            >
+              GitHub
+            </a>
           </div>
         </div>
       </div>

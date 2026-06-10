@@ -61,8 +61,17 @@ export default function HomePage() {
   return (
     <div className="bg-white dark:bg-surface-950">
       {/* Hero + search */}
-      <section className="border-b border-surface-200 bg-surface-50 dark:border-surface-800 dark:bg-surface-950">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+      <section className="relative overflow-hidden border-b border-surface-200 bg-surface-50 dark:border-surface-800 dark:bg-surface-950">
+        {/* Decorative glow */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-28 right-[-6rem] h-96 w-96 rounded-full bg-brand-400/20 blur-3xl dark:bg-brand-500/10"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-32 left-[-8rem] h-80 w-80 rounded-full bg-brand-300/15 blur-3xl dark:bg-brand-700/10"
+        />
+        <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
           <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
             <span className="rounded-md border border-brand-200 bg-white px-2.5 py-1 font-medium text-brand-700 dark:border-brand-800 dark:bg-surface-900 dark:text-brand-300">
               {calculators.length} calculators
@@ -168,7 +177,11 @@ export default function HomePage() {
             {filtered.length > 0 ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((calculator) => (
-                  <CalculatorCard key={calculator.meta.slug} meta={calculator.meta} />
+                  <CalculatorCard
+                    key={calculator.meta.slug}
+                    meta={calculator.meta}
+                    formula={calculator.formula}
+                  />
                 ))}
               </div>
             ) : (
@@ -192,7 +205,11 @@ export default function HomePage() {
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {popular.map((calculator) => (
-                    <CalculatorCard key={calculator.meta.slug} meta={calculator.meta} />
+                    <CalculatorCard
+                      key={calculator.meta.slug}
+                      meta={calculator.meta}
+                      formula={calculator.formula}
+                    />
                   ))}
                 </div>
               </div>
@@ -220,7 +237,11 @@ export default function HomePage() {
                   {calculators
                     .filter((calculator) => calculator.meta.category === category.id)
                     .map((calculator) => (
-                      <CalculatorCard key={calculator.meta.slug} meta={calculator.meta} />
+                      <CalculatorCard
+                        key={calculator.meta.slug}
+                        meta={calculator.meta}
+                        formula={calculator.formula}
+                      />
                     ))}
                 </div>
               </div>

@@ -222,8 +222,15 @@ Ads stay hidden until the required provider IDs are present. In development, ad 
 
 ## Enabling Stripe Checkout
 
-1. Create a product and price in Stripe.
-2. Add these environment variables in Vercel:
+Step by step (do this in [dashboard.stripe.com](https://dashboard.stripe.com) — start in **Test mode**, repeat in Live mode when ready):
+
+1. **Get your secret key**: Developers → API keys → copy the **Secret key** (`sk_test_...` / `sk_live_...`).
+2. **Create the product**: Product catalogue → Add product (e.g. "Support Engineering Calculator Hub") with a one-off price. Copy the **Price ID** (`price_...`).
+3. **Create the webhook**: Developers → Webhooks → Add endpoint:
+   - URL: `https://YOUR_DOMAIN/api/stripe/webhook`
+   - Events: `checkout.session.completed`
+   - Copy the **Signing secret** (`whsec_...`).
+4. **Set the environment variables** (Vercel → Project → Settings → Environment Variables, or `.env.local` for local dev):
 
 ```bash
 NEXT_PUBLIC_STRIPE_ENABLED=true
@@ -232,13 +239,31 @@ STRIPE_PRICE_ID=price_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
-3. Point the Stripe webhook endpoint to:
+5. Redeploy. The Support button appears, checkout opens on Stripe's hosted page (card details never touch this app), the success page **verifies the session server-side**, and the webhook records completed payments in Supabase (when configured, below).
 
-```text
-https://YOUR_DOMAIN/api/stripe/webhook
+The support button is hidden unless `NEXT_PUBLIC_STRIPE_ENABLED=true`. Checkout creation still fails safely unless both `STRIPE_SECRET_KEY` and `STRIPE_PRICE_ID` are configured. The checkout endpoint is rate-limited and origin-checked.
+
+## Connecting Supabase
+
+A Supabase project (`engineering-calculator-hub`, region `us-east-1`) backs two small, server-only tables:
+
+- `donations` — written by the Stripe webhook (session ID, amount, currency, status)
+- `feedback` — written by the `/feedback` form (message + optional email)
+
+Both tables have **row-level security enabled with zero policies and revoked client grants**, so they are completely inaccessible with the public anon key — all access goes through server API routes using the service-role key.
+
+To connect a deployment:
+
+1. Open the Supabase Dashboard → project **engineering-calculator-hub** → Settings → API.
+2. Copy the **Project URL** and the **service_role** key.
+3. Set them as environment variables (server-only — never `NEXT_PUBLIC_`):
+
+```bash
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
 ```
 
-The support button is hidden unless `NEXT_PUBLIC_STRIPE_ENABLED=true`. Checkout creation still fails safely unless both `STRIPE_SECRET_KEY` and `STRIPE_PRICE_ID` are configured.
+Without these variables the site still works: the feedback form reports "not configured" and the webhook simply skips persistence.
 
 ## Deployment
 

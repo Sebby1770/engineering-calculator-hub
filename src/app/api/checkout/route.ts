@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getSiteUrl } from '@/lib/site';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
+import { isAllowedOrigin, isLocalOrigin } from '@/lib/requestGuards';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,37 +12,11 @@ function getStripeClient() {
   return secretKey ? new Stripe(secretKey) : null;
 }
 
-function isLocalHost(hostname: string) {
-  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname === '::1';
-}
-
-// CSRF defense: reject POSTs from a foreign origin. A missing Origin is allowed
-// because browsers always attach Origin to genuine cross-site requests, so the
-// classic cross-site form/fetch attack is still blocked, while non-browser callers
-// and the occasional same-origin client that omits Origin keep working.
-function isAllowedOrigin(origin: string | null) {
-  if (!origin) return true;
-  try {
-    const url = new URL(origin);
-    if (isLocalHost(url.hostname)) return true;
-    return url.host === new URL(getSiteUrl()).host;
-  } catch {
-    return false;
-  }
-}
-
 function getCheckoutOrigin(request: Request) {
   const origin = request.headers.get('origin');
-
-  if (origin) {
-    try {
-      const url = new URL(origin);
-      if (isLocalHost(url.hostname)) return origin.replace(/\/+$/, '');
-    } catch {
-      // fall through to the configured site URL
-    }
+  if (origin && isLocalOrigin(origin)) {
+    return origin.replace(/\/+$/, '');
   }
-
   return getSiteUrl();
 }
 
@@ -74,10 +49,12 @@ export async function POST(request: Request) {
     const origin = getCheckoutOrigin(request);
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
+      submit_type: 'donate',
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/cancelled`,
       allow_promotion_codes: true,
+      metadata: { source: 'support-button' },
     });
 
     if (!session.url) {
