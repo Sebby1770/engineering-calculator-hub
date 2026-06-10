@@ -8,6 +8,10 @@ const isDev = process.env.NODE_ENV !== 'production';
 // - 'unsafe-eval' is added in development only, for React Fast Refresh.
 // - Google AdSense domains are pre-allowed so ads keep working if/when
 //   NEXT_PUBLIC_AD_ENABLED is set to "true". Tighten these if you do not use ads.
+// NOTE: deliberately no `upgrade-insecure-requests` — Safari applies it even to
+// http://localhost, silently breaking CSS/JS when previewing production builds
+// locally. HTTPS on the real domain is already enforced by HSTS + the host's
+// automatic http->https redirect.
 const cspDirectives = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -21,10 +25,6 @@ const cspDirectives = [
   "connect-src 'self' https://pagead2.googlesyndication.com",
   "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com",
 ];
-
-if (!isDev) {
-  cspDirectives.push('upgrade-insecure-requests');
-}
 
 const securityHeaders = [
   { key: 'Content-Security-Policy', value: cspDirectives.join('; ') },

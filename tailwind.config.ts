@@ -42,6 +42,8 @@ const config: Config = {
         'fade-in': 'fadeIn 0.5s ease-out',
         'slide-up': 'slideUp 0.5s ease-out',
         'slide-in-right': 'slideInRight 0.3s ease-out',
+        'gradient-x': 'gradientX 6s ease infinite',
+        'float-slow': 'floatSlow 14s ease-in-out infinite alternate',
       },
       keyframes: {
         fadeIn: {
@@ -55,6 +57,14 @@ const config: Config = {
         slideInRight: {
           '0%': { opacity: '0', transform: 'translateX(12px)' },
           '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        gradientX: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+        floatSlow: {
+          '0%': { transform: 'translate3d(0, 0, 0)' },
+          '100%': { transform: 'translate3d(0, -18px, 0)' },
         },
       },
     },
