@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { calculators, getPopularCalculators } from '@/data/calculators';
 import { categories } from '@/data/categories';
 import CalculatorCard from '@/components/ui/CalculatorCard';
+import CategoryIcon from '@/components/ui/CategoryIcon';
 import { AdBanner } from '@/components/ads';
 import type { CalculatorConfig, Category } from '@/types';
 
@@ -31,6 +32,20 @@ export default function HomePage() {
   const searchRef = useRef<HTMLInputElement>(null);
   const trimmedSearch = search.trim().toLowerCase();
 
+  // Only show categories that actually contain calculators.
+  const populatedCategories = useMemo(
+    () => categories.filter((category) => calculators.some((c) => c.meta.category === category.id)),
+    []
+  );
+
+  // Deep links: /?category=electrical preselects a category filter.
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get('category');
+    if (param && categories.some((c) => c.id === param)) {
+      setActiveCategory(param as Category);
+    }
+  }, []);
+
   // Press "/" anywhere to jump to search.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -45,12 +60,6 @@ export default function HomePage() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
-
-  // Only show categories that actually contain calculators.
-  const populatedCategories = useMemo(
-    () => categories.filter((category) => calculators.some((c) => c.meta.category === category.id)),
-    []
-  );
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -70,9 +79,20 @@ export default function HomePage() {
 
   const isFiltering = trimmedSearch !== '' || activeCategory !== 'all';
 
+  const selectCategory = (category: CategoryFilter) => {
+    setActiveCategory(category);
+    const url = new URL(window.location.href);
+    if (category === 'all') {
+      url.searchParams.delete('category');
+    } else {
+      url.searchParams.set('category', category);
+    }
+    window.history.replaceState(null, '', url.toString());
+  };
+
   const resetFilters = () => {
     setSearch('');
-    setActiveCategory('all');
+    selectCategory('all');
   };
 
   return (
@@ -123,8 +143,8 @@ export default function HomePage() {
               </span>
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-surface-600 dark:text-surface-300">
-              Every formula you reach for — circuits, signals, physics, and conversions — each on
-              its own fast page. Pick one below and start calculating.
+              Every formula you reach for — circuits, signals, physics, and conversions. Pick a
+              calculator from the menu above, or search below.
             </p>
 
             {/* Search */}
@@ -164,7 +184,7 @@ export default function HomePage() {
             <div className="mt-6 flex flex-wrap justify-center gap-2" aria-label="Category filters">
               <button
                 type="button"
-                onClick={() => setActiveCategory('all')}
+                onClick={() => selectCategory('all')}
                 aria-pressed={activeCategory === 'all'}
                 className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                   activeCategory === 'all'
@@ -178,15 +198,15 @@ export default function HomePage() {
                 <button
                   key={category.id}
                   type="button"
-                  onClick={() => setActiveCategory(category.id)}
+                  onClick={() => selectCategory(category.id)}
                   aria-pressed={activeCategory === category.id}
-                  className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition ${
                     activeCategory === category.id
                       ? 'border-brand-500 bg-brand-600 text-white shadow-sm shadow-brand-500/25'
                       : 'border-surface-200 bg-white/70 text-surface-600 backdrop-blur hover:border-brand-300 hover:text-brand-600 dark:border-surface-700 dark:bg-surface-900/70 dark:text-surface-300'
                   }`}
                 >
-                  <span className="mr-1.5">{category.icon}</span>
+                  <CategoryIcon category={category.id} className="h-4 w-4" />
                   {category.name} ({categoryCounts[category.id]})
                 </button>
               ))}
@@ -211,7 +231,7 @@ export default function HomePage() {
         <AdBanner />
       </section>
 
-      {/* ───────────────────────── Listing ───────────────────────── */}
+      {/* ───────────────────────── Content ───────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         {isFiltering ? (
           <>
@@ -221,7 +241,9 @@ export default function HomePage() {
                   {filtered.length} matching {filtered.length === 1 ? 'calculator' : 'calculators'}
                 </p>
                 <h2 className="font-display text-2xl font-bold text-surface-950 dark:text-white">
-                  Search results
+                  {activeCategory !== 'all' && !trimmedSearch
+                    ? categories.find((c) => c.id === activeCategory)?.name
+                    : 'Search results'}
                 </h2>
               </div>
               <button
@@ -260,9 +282,9 @@ export default function HomePage() {
           </>
         ) : (
           <div className="space-y-14">
-            {/* Popular */}
+            {/* Popular — the only listing on the page; everything else lives in the menu */}
             {popular.length > 0 && (
-              <div id="popular">
+              <div>
                 <div className="mb-5 flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -278,7 +300,7 @@ export default function HomePage() {
                     </span>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {popular.map((calculator) => (
                     <CalculatorCard
                       key={calculator.meta.slug}
@@ -287,45 +309,15 @@ export default function HomePage() {
                     />
                   ))}
                 </div>
+                <p className="mt-4 text-sm text-surface-500 dark:text-surface-400">
+                  Looking for something else? Browse all {calculators.length} calculators from the{' '}
+                  <strong className="font-semibold text-surface-700 dark:text-surface-200">
+                    Calculators
+                  </strong>{' '}
+                  menu at the top, or filter by category above.
+                </p>
               </div>
             )}
-
-            {/* By category */}
-            {populatedCategories.map((category) => (
-              <div key={category.id} id={category.id} className="scroll-mt-24">
-                <div className="mb-5 flex items-center gap-3">
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${category.color} text-lg font-bold text-white shadow-sm`}
-                  >
-                    {category.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-baseline gap-3">
-                      <h2 className="font-display text-xl font-bold text-surface-950 dark:text-white">
-                        {category.name}
-                      </h2>
-                      <span className="rounded-full bg-surface-100 px-2.5 py-0.5 text-xs font-semibold text-surface-500 dark:bg-surface-800 dark:text-surface-400">
-                        {categoryCounts[category.id]}
-                      </span>
-                    </div>
-                    <p className="text-sm text-surface-500 dark:text-surface-400">
-                      {category.description}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {calculators
-                    .filter((calculator) => calculator.meta.category === category.id)
-                    .map((calculator) => (
-                      <CalculatorCard
-                        key={calculator.meta.slug}
-                        meta={calculator.meta}
-                        formula={calculator.formula}
-                      />
-                    ))}
-                </div>
-              </div>
-            ))}
 
             {/* CTA band */}
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-indigo-800 p-8 text-white shadow-xl shadow-brand-500/10 sm:p-10">

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { getCalculatorBySlug } from '@/data/calculators';
 import CalculatorLayout from '@/components/calculators/CalculatorLayout';
+import ProGate from '@/components/billing/ProGate';
 
 // Calculator components
 import OhmsLawCalc from '@/components/calculators/OhmsLawCalc';
@@ -51,9 +52,17 @@ export default function CalculatorPageClient({ slug }: { slug: string }) {
   const CalcComponent = CALCULATOR_MAP[slug];
   if (!CalcComponent) return null;
 
+  const calculator = config.meta.pro ? (
+    <ProGate>
+      <CalcComponent onResult={setResult} />
+    </ProGate>
+  ) : (
+    <CalcComponent onResult={setResult} />
+  );
+
   return (
     <CalculatorLayout config={config} result={result}>
-      <CalcComponent onResult={setResult} />
+      {calculator}
     </CalculatorLayout>
   );
 }

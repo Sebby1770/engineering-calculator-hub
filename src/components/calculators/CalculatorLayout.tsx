@@ -29,7 +29,7 @@ export default function CalculatorLayout({ config, result, children }: Calculato
         <ol className="flex items-center gap-1.5 text-surface-500 dark:text-surface-400">
           <li><Link href="/" className="hover:text-brand-500 transition-colors">Home</Link></li>
           <li><span className="mx-1">/</span></li>
-          <li><Link href={`/#${meta.category}`} className="hover:text-brand-500 transition-colors">{cat?.name}</Link></li>
+          <li><Link href={`/?category=${meta.category}`} className="hover:text-brand-500 transition-colors">{cat?.name}</Link></li>
           <li><span className="mx-1">/</span></li>
           <li className="text-surface-900 dark:text-white font-medium truncate">{meta.shortTitle}</li>
         </ol>

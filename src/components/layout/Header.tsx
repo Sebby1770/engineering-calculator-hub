@@ -5,18 +5,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useTheme } from './ThemeProvider';
 import { categories } from '@/data/categories';
 import { calculators } from '@/data/calculators';
+import CategoryIcon from '@/components/ui/CategoryIcon';
 import SupportCheckoutButton from '@/components/billing/SupportCheckoutButton';
 
-// Only categories that actually have calculators.
-const navCategories = categories.filter((cat) =>
-  calculators.some((calc) => calc.meta.category === cat.id)
-);
-
-// Calculators grouped by category, for the dropdown menu.
-const calculatorsByCategory = navCategories.map((cat) => ({
-  category: cat,
-  items: calculators.filter((calc) => calc.meta.category === cat.id),
-}));
+// Calculators grouped by category, for the dropdown + mobile menu.
+const calculatorsByCategory = categories
+  .map((category) => ({
+    category,
+    items: calculators.filter((calc) => calc.meta.category === category.id),
+  }))
+  .filter((group) => group.items.length > 0);
 
 export default function Header() {
   const { theme, toggle } = useTheme();
@@ -61,7 +59,7 @@ export default function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-1">
-            {/* All-calculators dropdown */}
+            {/* All-calculators dropdown — the primary navigation */}
             <div
               ref={calcMenuRef}
               className="relative"
@@ -97,9 +95,9 @@ export default function Header() {
                   <div className="grid grid-cols-2 gap-x-8 gap-y-5">
                     {calculatorsByCategory.map(({ category, items }) => (
                       <div key={category.id}>
-                        <div className="mb-2 flex items-center gap-2">
-                          <span className="text-base">{category.icon}</span>
-                          <span className="text-xs font-bold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                        <div className="mb-2 flex items-center gap-2 text-surface-500 dark:text-surface-400">
+                          <CategoryIcon category={category.id} className="h-4 w-4" />
+                          <span className="text-xs font-bold uppercase tracking-wider">
                             {category.name}
                           </span>
                         </div>
@@ -124,21 +122,28 @@ export default function Header() {
               )}
             </div>
 
-            {/* Category quick links */}
-            {navCategories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/#${cat.id}`}
-                className="px-3 py-2 text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
-              >
-                <span className="mr-1.5">{cat.icon}</span>
-                {cat.name}
-              </Link>
-            ))}
+            <Link
+              href="/about"
+              className="px-3 py-2 text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+            >
+              About
+            </Link>
+            <Link
+              href="/feedback"
+              className="px-3 py-2 text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+            >
+              Feedback
+            </Link>
           </nav>
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            <Link
+              href="/account"
+              className="hidden sm:inline-flex px-3 py-2 text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+            >
+              Account
+            </Link>
             <div className="hidden sm:block">
               <SupportCheckoutButton compact />
             </div>
@@ -179,7 +184,7 @@ export default function Header() {
             {calculatorsByCategory.map(({ category, items }) => (
               <div key={category.id} className="mb-3">
                 <div className="flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider text-surface-500 dark:text-surface-400">
-                  <span className="text-base">{category.icon}</span>
+                  <CategoryIcon category={category.id} className="h-4 w-4" />
                   {category.name}
                 </div>
                 <ul>
@@ -197,7 +202,23 @@ export default function Header() {
                 </ul>
               </div>
             ))}
-            <div className="px-3 pt-2">
+            <div className="border-t border-surface-200 pt-3 dark:border-surface-800">
+              {[
+                ['/about', 'About'],
+                ['/feedback', 'Feedback'],
+                ['/account', 'Account'],
+              ].map(([href, label]) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-surface-600 dark:text-surface-300 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-surface-100 dark:hover:bg-surface-800"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+            <div className="px-3 pt-3">
               <SupportCheckoutButton />
             </div>
           </nav>

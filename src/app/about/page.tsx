@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { absoluteUrl } from '@/lib/site';
 import { calculators } from '@/data/calculators';
 import { categories } from '@/data/categories';
+import CategoryIcon from '@/components/ui/CategoryIcon';
 
 export const metadata: Metadata = {
   title: 'About Engineering Calculator Hub',
@@ -60,13 +61,13 @@ export default function AboutPage() {
               return (
                 <Link
                   key={category.id}
-                  href={`/#${category.id}`}
+                  href={`/?category=${category.id}`}
                   className="flex items-center gap-3 rounded-lg border border-surface-200 p-4 transition-colors hover:border-brand-300 dark:border-surface-800 dark:hover:border-brand-700"
                 >
                   <div
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${category.color} text-lg font-bold text-white`}
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${category.color} text-white`}
                   >
-                    {category.icon}
+                    <CategoryIcon category={category.id} className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
                     <p className="font-display font-semibold text-surface-900 dark:text-white">

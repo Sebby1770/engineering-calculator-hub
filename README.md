@@ -265,6 +265,37 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 
 Without these variables the site still works: the feedback form reports "not configured" and the webhook simply skips persistence.
 
+## Turning it into a SaaS (accounts + Pro subscriptions)
+
+The SaaS plumbing is built in and switches on with configuration — no code changes needed:
+
+- **Accounts**: passwordless **magic-link sign-in** via Supabase Auth (`/account`). A `profiles`
+  row is auto-created for every user (RLS: each user can read only their own row).
+- **Pro subscription**: `/api/billing/subscribe` creates a Stripe Checkout session in
+  `subscription` mode; the webhook keeps `profiles.subscription_status` in sync
+  (`checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`);
+  `/api/billing/portal` opens the Stripe Billing Portal for self-serve cancel/upgrade.
+- **Gating**: mark any calculator with `pro: true` in `src/data/calculators.ts` and it renders
+  behind a sign-in/upgrade gate (verified server-side via `/api/me/subscription`). Until you mark
+  one, nothing is paywalled. Note: calculators run client-side, so the gate is a product
+  boundary, not a hard security boundary — keep genuinely secret logic server-side.
+
+Setup:
+
+1. **Stripe**: create a **recurring** price (e.g. "Pro — $5/month") → set `STRIPE_PRO_PRICE_ID`.
+   Add `customer.subscription.updated` and `customer.subscription.deleted` to your webhook
+   endpoint's events (alongside `checkout.session.completed`). Enable the **Billing Portal**
+   (Settings → Billing → Customer portal).
+2. **Supabase Auth**: Dashboard → Authentication → URL Configuration → set the Site URL to your
+   production domain and add it (plus `http://localhost:3000`) to Redirect URLs. The default
+   Supabase email service is fine to start (rate-limited); add custom SMTP for volume.
+3. **Environment variables**: the two `NEXT_PUBLIC_SUPABASE_*` values above plus
+   `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PRO_PRICE_ID`,
+   `STRIPE_WEBHOOK_SECRET`.
+
+Everything degrades gracefully: with no configuration, `/account` explains accounts are off and
+Pro-gated calculators stay open.
+
 ## Deployment
 
 Recommended: **Vercel**.

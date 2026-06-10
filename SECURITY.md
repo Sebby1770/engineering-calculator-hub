@@ -1,12 +1,13 @@
 # Security Checklist & Posture
 
 This document records how the **Engineering Calculator Hub** addresses the 50-point
-security checklist. It reflects what this app actually is: a **Next.js (App Router)
-static-content calculator site** with **no user accounts**. Server code is limited to
-four API routes (Stripe checkout, Stripe webhook, feedback intake, health check), and
-a **locked-down Supabase Postgres database** holds two server-only tables: a donation
-log written by the Stripe webhook, and visitor feedback. Items that don't apply are
-marked **N/A** with the reason, rather than left ambiguous.
+security checklist. The app is a **Next.js (App Router) calculator site** with optional
+SaaS features: **Supabase Auth** (passwordless magic links), a **Stripe Pro
+subscription** (Checkout + Billing Portal + webhook sync), and a **locked-down Supabase
+Postgres database** (donation log, feedback, per-user profiles). Server code is limited
+to seven API routes: checkout, subscribe, portal, subscription-status, webhook, feedback,
+and health. Items that don't apply are marked **N/A** with the reason, rather than left
+ambiguous.
 
 Reporting: see [/.well-known/security.txt](public/.well-known/security.txt) — report
 vulnerabilities via [GitHub security advisories](https://github.com/Sebby1770/engineering-calculator-hub/security/advisories/new).
@@ -42,7 +43,7 @@ The database was added deliberately small and locked down (project `engineering-
 | 7 | Open database read/write permissions | ✅ **RLS enabled with zero policies** on both tables **and** `REVOKE ALL ... FROM anon, authenticated` — client roles can do nothing, even with the anon key. |
 | 8 | Misconfigured Firebase/Supabase/S3 | ✅ See above; no storage buckets, no client SDK, no realtime. All access is server-side REST with the service role. |
 | 17 | SQL injection | ✅ No SQL is ever built from user input — inserts go through PostgREST as JSON; lengths/format enforced by `CHECK` constraints. |
-| 41 | Excessive DB permissions for app user | ✅/📋 The serverless routes use the service role (full access) but touch only two tables with insert-only code paths. For stricter least-privilege, a dedicated Postgres role with INSERT-only grants could replace it later. |
+| 41 | Excessive DB permissions for app user | ✅/📋 The serverless routes use the service role (full access) but touch only three tables (`donations`, `feedback`, `profiles`) through narrow helpers. For stricter least-privilege, a dedicated Postgres role with table-scoped grants could replace it later. |
 | 42 | No audit logs | ✅ (lightweight) The `donations` table is an append-only record of every completed checkout, independent of Stripe's dashboard. |
 | 44 | No backup/restore plan | 📋 Data is low-criticality (feedback + donation log; Stripe holds the authoritative payment records). Supabase free tier has no scheduled backups — upgrade to Pro or export periodically if this data becomes important. |
 | 48 | Unencrypted sensitive data | ✅ Supabase encrypts at rest; transport is TLS; the only personal field stored is an optional feedback email. |
@@ -61,18 +62,19 @@ The database was added deliberately small and locked down (project `engineering-
 
 ## 4. Not applicable to this app (with reason)
 
-| # | Item | Why N/A |
+| # | Item | Why N/A / how handled |
 |---|------|---------|
-| 4 | Weak/missing authentication | No login or user accounts. |
-| 5 | No authorization checks | No protected resources or roles. |
-| 6 | Users accessing others' data | No per-user data is exposed; the two DB tables are unreadable from the client entirely. |
+| 4 | Weak/missing authentication | ✅ Handled by **Supabase Auth** with passwordless magic links — no passwords exist to be weak. API routes verify the bearer token server-side against Supabase on every request (`src/lib/supabaseAuth.ts`). |
+| 5 | No authorization checks | ✅ The only per-user resource (`profiles`) is readable solely by its owner (RLS `auth.uid() = id`); billing routes act only on the verified caller's own profile. |
+| 6 | Users accessing others' data | ✅ RLS own-row policy + all queries server-side filtered by the verified user id. |
 | 9 | Admin routes unprotected | No admin area (data is viewed in the Supabase dashboard, behind Supabase auth). |
 | 18 | NoSQL injection | No NoSQL store. |
 | 21 | Insecure file uploads | No upload functionality. |
 | 23 | SSRF | The server never fetches user-supplied URLs (Supabase/Stripe URLs are fixed config). |
-| 24 | Broken password reset | No auth. |
-| 25 | Weak session management | No sessions/cookies are issued. |
-| 26 | Weak/leaked/reused JWT secrets | No JWTs are issued by this app. |
+| 24 | Broken password reset | ➖ No passwords at all — sign-in is a one-time emailed link (Supabase-managed). |
+| 25 | Weak session management | ✅ Sessions are Supabase-issued JWTs, validated server-side per request; this app still sets no cookies of its own. |
+| 26 | Weak/leaked/reused JWT secrets | JWTs are issued and signed by Supabase (managed); this app never signs tokens. |
+| 15 | Client-side-only security checks | ✅/📋 Pro gating asks the server (`/api/me/subscription`) — the client never decides entitlement itself. Caveat documented: calculators execute client-side, so gating is a product boundary; keep genuinely secret logic in API routes. |
 | 30 | Default credentials | No credentials to set. |
 | 33 | IDOR | No object IDs are accepted from clients (the success page accepts a Stripe session ID but only displays what Stripe returns for it). |
 | 40 | AI tools accessing data without checks | No AI features. |

@@ -15,6 +15,8 @@ export interface CalculatorMeta {
   keywords: string[];
   popular?: boolean;
   new?: boolean;
+  /** Mark a calculator as part of the paid Pro tier (gated behind a subscription). */
+  pro?: boolean;
 }
 
 export interface FAQ {

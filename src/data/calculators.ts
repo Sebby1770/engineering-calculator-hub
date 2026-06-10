@@ -97,7 +97,7 @@ export const calculators: CalculatorConfig[] = [
       description:
         'Decode resistor color bands to find resistance value and tolerance. Supports 4-band, 5-band, and 6-band resistors. Interactive visual tool with instant results.',
       category: 'electrical',
-      icon: '🎨',
+      icon: 'kΩ',
       keywords: ['resistor color code', 'band decoder', 'resistance value', 'tolerance'],
     },
     formula: 'R = (Band1 × 10 + Band2) × Multiplier ± Tolerance',
