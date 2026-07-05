@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { create, all } from 'mathjs';
+import { useState, useRef } from "react";
+import { create, all } from "mathjs";
 
 const math = create(all);
 
 math.config({
-  number: 'BigNumber',
-  precision: 20
+  number: "BigNumber",
+  precision: 20,
 });
 
 // Harden mathjs against expression-based function injection (defense in depth).
@@ -17,24 +17,30 @@ math.config({
 math.import(
   {
     import: function denied() {
-      throw new Error('import is disabled');
+      throw new Error("import is disabled");
     },
     createUnit: function denied() {
-      throw new Error('createUnit is disabled');
+      throw new Error("createUnit is disabled");
     },
   },
-  { override: true }
+  { override: true },
 );
 
 // Reject absurdly long expressions before parsing (cheap DoS guard).
 const MAX_EXPRESSION_LENGTH = 1000;
 
-export default function UniversalCalculator({ onResult }: { onResult?: (result: string) => void }) {
-  const [input, setInput] = useState('');
-  const [result, setResult] = useState('');
+export default function UniversalCalculator({
+  onResult,
+}: {
+  onResult?: (result: string) => void;
+}) {
+  const [input, setInput] = useState("");
+  const [result, setResult] = useState("");
   const [isError, setIsError] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [history, setHistory] = useState<{input: string; result: string}[]>([]);
+  const [history, setHistory] = useState<{ input: string; result: string }[]>(
+    [],
+  );
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const formatResult = (value: unknown) => {
@@ -51,7 +57,9 @@ export default function UniversalCalculator({ onResult }: { onResult?: (result: 
     if (!trimmedExpression) return;
 
     if (trimmedExpression.length > MAX_EXPRESSION_LENGTH) {
-      setResult(`Expression is too long (max ${MAX_EXPRESSION_LENGTH} characters).`);
+      setResult(
+        `Expression is too long (max ${MAX_EXPRESSION_LENGTH} characters).`,
+      );
       setIsError(true);
       return;
     }
@@ -63,10 +71,13 @@ export default function UniversalCalculator({ onResult }: { onResult?: (result: 
       setResult(formattedResult);
       setIsError(false);
       setCopied(false);
-      setHistory(prev => [{ input: trimmedExpression, result: formattedResult }, ...prev.slice(0, 9)]);
+      setHistory((prev) => [
+        { input: trimmedExpression, result: formattedResult },
+        ...prev.slice(0, 9),
+      ]);
       if (onResult) onResult(formattedResult);
     } catch {
-      setResult('Invalid expression or unsupported operation');
+      setResult("Invalid expression or unsupported operation");
       setIsError(true);
     }
   };
@@ -81,26 +92,28 @@ export default function UniversalCalculator({ onResult }: { onResult?: (result: 
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       calculate();
     }
   };
 
   const clear = () => {
-    setInput('');
-    setResult('');
+    setInput("");
+    setResult("");
     setIsError(false);
     inputRef.current?.focus();
   };
 
   const exampleQuestions = [
-    '2 + 3 * sin(45 deg)',
-    '5 m + 30 cm',
-    '10!',
-    'sin(pi/2)',
-    '2^10',
-    'sqrt(144)'
+    "2 + 3 * sin(45 deg)",
+    "integrate(x^2, x, 0, 2)",
+    "derivative(x^3 + 2*x, x)",
+    "det([[2,3],[1,4]])",
+    "sqrt(-1)",
+    "2^20",
+    "5 m + 30 cm",
+    "solve(x^2 - 5*x + 6 = 0, x)",
   ];
 
   return (
@@ -112,7 +125,18 @@ export default function UniversalCalculator({ onResult }: { onResult?: (result: 
             Expression
           </label>
           <span className="hidden sm:inline text-[11px] font-mono text-surface-400 dark:text-surface-500">
-            <kbd className="px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800">Enter</kbd> to calculate · <kbd className="px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800">Shift</kbd>+<kbd className="px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800">Enter</kbd> for newline
+            <kbd className="px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800">
+              Enter
+            </kbd>{" "}
+            to calculate ·{" "}
+            <kbd className="px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800">
+              Shift
+            </kbd>
+            +
+            <kbd className="px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800">
+              Enter
+            </kbd>{" "}
+            for newline
           </span>
         </div>
         <textarea
@@ -136,7 +160,16 @@ export default function UniversalCalculator({ onResult }: { onResult?: (result: 
           disabled={!input.trim()}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed px-8 py-3 font-semibold text-white transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
           Calculate
         </button>
         <button
@@ -152,22 +185,26 @@ export default function UniversalCalculator({ onResult }: { onResult?: (result: 
         <div
           className={`mt-5 rounded-xl border p-5 transition-colors ${
             isError
-              ? 'border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30'
-              : 'border-brand-200 dark:border-brand-900/50 bg-gradient-to-br from-brand-50 to-white dark:from-brand-950/30 dark:to-surface-900'
+              ? "border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30"
+              : "border-brand-200 dark:border-brand-900/50 bg-gradient-to-br from-brand-50 to-white dark:from-brand-950/30 dark:to-surface-900"
           }`}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <div className={`text-xs font-semibold uppercase tracking-widest ${
-                isError ? 'text-red-500 dark:text-red-400' : 'text-brand-600 dark:text-brand-400'
-              }`}>
-                {isError ? 'Error' : 'Result'}
+              <div
+                className={`text-xs font-semibold uppercase tracking-widest ${
+                  isError
+                    ? "text-red-500 dark:text-red-400"
+                    : "text-brand-600 dark:text-brand-400"
+                }`}
+              >
+                {isError ? "Error" : "Result"}
               </div>
               <div
                 className={`mt-1.5 break-all font-mono font-bold leading-tight ${
                   isError
-                    ? 'text-base text-red-700 dark:text-red-300'
-                    : 'text-3xl sm:text-4xl text-surface-900 dark:text-white'
+                    ? "text-base text-red-700 dark:text-red-300"
+                    : "text-3xl sm:text-4xl text-surface-900 dark:text-white"
                 }`}
               >
                 {result}
@@ -181,12 +218,31 @@ export default function UniversalCalculator({ onResult }: { onResult?: (result: 
               >
                 {copied ? (
                   <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5" /></svg>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
                     Copied
                   </>
                 ) : (
                   <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <rect x="9" y="9" width="13" height="13" rx="2" />
+                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                    </svg>
                     Copy
                   </>
                 )}
@@ -241,8 +297,12 @@ export default function UniversalCalculator({ onResult }: { onResult?: (result: 
                 }}
                 className="w-full text-left flex flex-col gap-1 px-4 py-3 text-sm transition-colors hover:bg-surface-50 dark:hover:bg-surface-800/50 sm:flex-row sm:items-center sm:justify-between"
               >
-                <span className="font-mono text-surface-600 dark:text-surface-400 truncate">{item.input}</span>
-                <span className="font-mono font-semibold text-surface-900 dark:text-white shrink-0">= {item.result}</span>
+                <span className="font-mono text-surface-600 dark:text-surface-400 truncate">
+                  {item.input}
+                </span>
+                <span className="font-mono font-semibold text-surface-900 dark:text-white shrink-0">
+                  = {item.result}
+                </span>
               </button>
             ))}
           </div>
@@ -250,7 +310,8 @@ export default function UniversalCalculator({ onResult }: { onResult?: (result: 
       )}
 
       <p className="text-center text-xs text-surface-400 mt-6">
-        Powered by mathjs • Supports units, trig, factorials, complex math & more
+        Powered by mathjs • Supports derivatives, integrals, matrices, complex
+        numbers, units, and advanced expressions
       </p>
     </div>
   );

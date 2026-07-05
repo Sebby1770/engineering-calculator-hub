@@ -1,9 +1,12 @@
 export type Category =
-  | 'electrical'
-  | 'mathematics'
-  | 'physics'
-  | 'conversions'
-  | 'signals';
+  | "electrical"
+  | "mathematics"
+  | "calculus"
+  | "geometry"
+  | "linear_algebra"
+  | "physics"
+  | "conversions"
+  | "signals";
 
 export interface CalculatorMeta {
   slug: string;
