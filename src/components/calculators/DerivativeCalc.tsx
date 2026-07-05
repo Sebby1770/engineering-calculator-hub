@@ -22,7 +22,7 @@ export default function DerivativeCalc({
       const derivative = math.derivative(expression, variable);
       const simplified = math.simplify(derivative);
       const symbolic = simplified.toString();
-      const numeric = math.evaluate(simplified, { [variable]: parseFloat(evaluateAt) });
+      const numeric = simplified.evaluate({ [variable]: parseFloat(evaluateAt) });
       const res = `f'(${variable}) = ${symbolic}\nf'(${evaluateAt}) = ${math.format(numeric, { precision: 10 })}`;
       setResult(res);
       onResult(symbolic);

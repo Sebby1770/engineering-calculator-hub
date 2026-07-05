@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { create, all } from "mathjs";
+import { create, all, type MathNode } from "mathjs";
 import CalcInput from "@/components/ui/CalcInput";
 import CalcResult from "@/components/ui/CalcResult";
 
@@ -27,7 +27,7 @@ export default function TaylorSeriesCalc({
       if ([x0, n, x].some((value) => Number.isNaN(value)) || n < 0) return;
 
       const compiled = math.compile(expression);
-      let polynomial = math.parse("0");
+      const terms: string[] = [];
       let factorial = 1;
 
       for (let k = 0; k <= n; k += 1) {
@@ -36,14 +36,15 @@ export default function TaylorSeriesCalc({
         for (let step = 0; step < k; step += 1) {
           current = math.derivative(current, variable).toString();
         }
-        const coefficient = math.evaluate(math.parse(current), { [variable]: x0 }) / factorial;
-        const term = math.parse(`${coefficient} * (${variable} - ${x0})^${k}`);
-        polynomial = math.simplify(math.add(polynomial, term));
+        const coefficient =
+          Number(math.parse(current).evaluate({ [variable]: x0 })) / factorial;
+        terms.push(`${coefficient} * (${variable} - ${x0})^${k}`);
       }
 
-      const approximation = math.evaluate(polynomial, { [variable]: x });
-      const exact = compiled.evaluate({ [variable]: x });
-      const error = Math.abs(Number(approximation) - Number(exact));
+      const polynomial = math.simplify(math.parse(terms.join(" + "))) as MathNode;
+      const approximation = Number(polynomial.evaluate({ [variable]: x }));
+      const exact = Number(compiled.evaluate({ [variable]: x }));
+      const error = Math.abs(approximation - exact);
 
       const res = `T_${n}(${variable}) ≈ ${polynomial.toString()}\nT_${n}(${x}) ≈ ${math.format(approximation, { precision: 10 })}\nExact f(${x}) = ${math.format(exact, { precision: 10 })}\n|Error| ≈ ${error.toExponential(3)}`;
       setResult(res);

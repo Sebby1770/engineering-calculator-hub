@@ -214,6 +214,29 @@ export function numericalLimit(
   return samples[samples.length - 1];
 }
 
+export function simpsonIntegral(
+  evaluate: (x: number) => number,
+  a: number,
+  b: number,
+  steps = 400,
+): number {
+  if (a === b) {
+    return 0;
+  }
+
+  const n = steps % 2 === 0 ? steps : steps + 1;
+  const h = (b - a) / n;
+  let sum = evaluate(a) + evaluate(b);
+
+  for (let i = 1; i < n; i += 1) {
+    const x = a + h * i;
+    const weight = i % 2 === 0 ? 2 : 4;
+    sum += weight * evaluate(x);
+  }
+
+  return (h / 3) * sum;
+}
+
 export function eulerSolve(
   derivative: (x: number, y: number) => number,
   x0: number,
