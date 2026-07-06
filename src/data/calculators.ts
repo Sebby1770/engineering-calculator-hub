@@ -289,11 +289,11 @@ const baseCalculators: CalculatorConfig[] = [
       ],
       new: true,
     },
-    formula: "Evaluate expressions, units, trig, powers, roots, and factorials",
+    formula: "Smart evaluate: simplify → solve → differentiate → integrate",
     formulaExplanation:
-      "The universal calculator accepts typed mathematical expressions and evaluates them directly. It supports arithmetic, constants, trigonometric functions, powers, roots, factorials, and compatible unit arithmetic such as adding meters and centimeters.",
+      "The universal calculator now runs in smart mode. It auto-detects equations, simplifies expressions before evaluation, routes derivative and integral syntax, and shows step-by-step work for every result.",
     exampleUsage:
-      "Try 2 + 3 * sin(45 deg), 5 m + 30 cm, sqrt(144), 2^10, or 10! to quickly evaluate common mathematical and engineering expressions.",
+      "Try x^2 - 7*x + 12 = 0, derivative(sin(x)*exp(x), x), integrate(x^2, x, 0, 2), simplify((x^2-1)/(x-1)), or 5 m + 30 cm.",
     faqs: [
       {
         question: "What can the universal calculator evaluate?",

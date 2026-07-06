@@ -1,6 +1,6 @@
 # Engineering Calculator Hub
 
-A modern, SEO-optimized engineering calculator website built with Next.js, designed for passive income via ad revenue and optional Stripe Checkout support. Features 32 fully interactive calculators across 8 categories — including calculus, geometry, and linear algebra — with SEO optimization, ad placements, and scalable architecture.
+A modern, SEO-optimized engineering calculator website built with Next.js, designed for passive income via ad revenue and optional Stripe Checkout support. Features 33 fully interactive calculators across 8 categories — including calculus, geometry, and linear algebra — with a smart math engine that shows step-by-step work, SEO optimization, ad placements, and scalable architecture.
 
 ## Tech Stack
 
@@ -12,10 +12,10 @@ A modern, SEO-optimized engineering calculator website built with Next.js, desig
 
 ## Features
 
-### Calculators (32 included)
+### Calculators (33 included)
 
-- **Electrical**: Ohm's Law, Voltage Divider, Resistor Color Code, RC Time Constant, Power, Parallel/Series Resistors
-- **Mathematics**: Universal Calculator, Scientific Calculator, Log Calculator, Binary/Hex/Decimal Converter
+- **Electrical**: Ohm's Law (with steps), Voltage Divider, Resistor Color Code, RC Time Constant, Power, Parallel/Series Resistors
+- **Mathematics**: Universal Calculator (smart mode), Equation Solver, Scientific Calculator, Log Calculator, Binary/Hex/Decimal Converter
 - **Calculus**: Derivative, Integral, Limit, ODE Solver, Taylor Series
 - **Geometry**: Triangle Solver, Circle, Pythagorean Theorem, 3D Volume, Distance
 - **Linear Algebra**: Determinant, Matrix Inverse, Matrix Multiply, Linear System Solver, Dot/Cross Product, Eigenvalues
@@ -47,6 +47,13 @@ Supports:
 - **Google AdSense** (ready-to-use integration)
 - **Ezoic** (placeholder IDs configured)
 - **Mediavine** (site ID slot)
+
+### Smart Math Engine
+
+- Auto-detects equations, derivatives, integrals, limits, matrices, and simplification
+- Step-by-step work shown with labeled stages (discriminant, factoring, Gaussian elimination, etc.)
+- Richardson extrapolation for sharper limit estimates
+- Symbolic + numeric paths for integrals and derivatives
 
 ### User Features
 

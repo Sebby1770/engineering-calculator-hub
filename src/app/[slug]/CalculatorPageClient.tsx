@@ -39,6 +39,7 @@ import MatrixMultiplyCalc from "@/components/calculators/MatrixMultiplyCalc";
 import LinearSystemCalc from "@/components/calculators/LinearSystemCalc";
 import DotCrossProductCalc from "@/components/calculators/DotCrossProductCalc";
 import EigenvalueCalc from "@/components/calculators/EigenvalueCalc";
+import EquationSolverCalc from "@/components/calculators/EquationSolverCalc";
 
 const CALCULATOR_MAP: Record<
   string,
@@ -61,6 +62,7 @@ const CALCULATOR_MAP: Record<
   "voltage-to-db-converter": VoltageToDbCalc,
   "frequency-to-period-converter": FreqPeriodCalc,
   "universal-calculator": UniversalCalculator,
+  "equation-solver-calculator": EquationSolverCalc,
   "derivative-calculator": DerivativeCalc,
   "integral-calculator": IntegralCalc,
   "limit-calculator": LimitCalc,

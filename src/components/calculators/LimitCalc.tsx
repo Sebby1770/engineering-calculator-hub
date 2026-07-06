@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { create, all } from "mathjs";
 import CalcInput from "@/components/ui/CalcInput";
 import CalcSelect from "@/components/ui/CalcSelect";
 import CalcResult from "@/components/ui/CalcResult";
-import { numericalLimit } from "@/lib/mathUtils";
-
-const math = create(all);
+import WorkSteps from "@/components/ui/WorkSteps";
+import { limitWithSteps } from "@/lib/smartMath";
 
 export default function LimitCalc({
   onResult,
@@ -19,27 +17,25 @@ export default function LimitCalc({
   const [point, setPoint] = useState("0");
   const [direction, setDirection] = useState("both");
   const [result, setResult] = useState<string | null>(null);
+  const [steps, setSteps] = useState<ReturnType<typeof limitWithSteps>["steps"]>([]);
 
   const calculate = () => {
     try {
-      const compiled = math.compile(expression);
       const x0 = parseFloat(point);
       if (Number.isNaN(x0)) return;
 
-      const evaluate = (x: number) => Number(compiled.evaluate({ [variable]: x }));
-      const limit = numericalLimit(evaluate, x0, direction as "both" | "left" | "right");
-
-      if (limit === null) {
-        setResult("Limit could not be estimated. Try a different expression or approach point.");
-        onResult("Undefined");
-        return;
-      }
-
-      const res = `lim(${variable}→${x0}) ${expression} ≈ ${limit.toPrecision(10)}`;
-      setResult(res);
-      onResult(limit.toPrecision(10));
+      const evaluation = limitWithSteps(
+        expression,
+        variable,
+        x0,
+        direction as "both" | "left" | "right",
+      );
+      setResult(evaluation.result);
+      setSteps(evaluation.steps);
+      onResult(evaluation.result.includes("Undefined") ? "Undefined" : evaluation.result);
     } catch {
       setResult("Invalid expression.");
+      setSteps([]);
       onResult("Invalid expression");
     }
   };
@@ -71,7 +67,12 @@ export default function LimitCalc({
       >
         Estimate Limit
       </button>
-      {result && <CalcResult value={result} detail="Uses numerical sampling near the approach point." />}
+      {result && (
+        <>
+          <CalcResult value={result} detail="Richardson extrapolation on sampled values near the approach point." />
+          <WorkSteps steps={steps} />
+        </>
+      )}
     </div>
   );
 }

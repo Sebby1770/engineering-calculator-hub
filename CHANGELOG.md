@@ -2,6 +2,20 @@
 
 All notable changes to Engineering Calculator Hub are documented in this file.
 
+## [1.2.0] - 2026-07-06
+
+### Added
+- **Smart math engine** (`smartMath.ts`) with step-by-step work for equations, derivatives, integrals, limits, matrices, and simplification.
+- **Equation Solver** calculator with quadratic discriminant analysis, factor form, and general `solve(f(x)=0, x)` support.
+- **WorkSteps** UI component for labeled, numbered solution steps across calculators.
+- Limit calculator now uses Richardson extrapolation with sample-point work shown.
+- Ohm's Law calculator shows rearrangement and substitution steps.
+
+### Changed
+- Universal calculator upgraded to smart mode: auto-detects equation type, shows kind badge, and displays step-by-step work.
+- Derivative, integral, and linear-system calculators now surface symbolic and numeric working.
+- Numerical limit estimation improved with Richardson extrapolation for higher accuracy.
+
 ## [1.1.0] - 2026-07-06
 
 ### Added

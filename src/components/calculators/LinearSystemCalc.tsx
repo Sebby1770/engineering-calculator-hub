@@ -4,7 +4,9 @@ import { useState } from "react";
 import CalcSelect from "@/components/ui/CalcSelect";
 import MatrixInput from "@/components/ui/MatrixInput";
 import CalcResult from "@/components/ui/CalcResult";
-import { parseMatrix, solveLinearSystem } from "@/lib/mathUtils";
+import WorkSteps from "@/components/ui/WorkSteps";
+import { parseMatrix } from "@/lib/mathUtils";
+import { linearSystemWithSteps, type WorkStep } from "@/lib/smartMath";
 
 export default function LinearSystemCalc({
   onResult,
@@ -15,6 +17,7 @@ export default function LinearSystemCalc({
   const [matrixText, setMatrixText] = useState("3, 1\n1, 2");
   const [vectorText, setVectorText] = useState("9\n8");
   const [result, setResult] = useState<string | null>(null);
+  const [steps, setSteps] = useState<WorkStep[]>([]);
 
   const calculate = () => {
     const dimension = parseInt(size, 10);
@@ -23,23 +26,22 @@ export default function LinearSystemCalc({
 
     if (!matrix || !vector) {
       setResult("Enter a valid coefficient matrix and result vector.");
+      setSteps([]);
       onResult("Invalid system");
       return;
     }
 
-    const solution = solveLinearSystem(matrix, vector);
-    if (!solution) {
+    const evaluation = linearSystemWithSteps(matrix, vector);
+    if (!evaluation) {
       setResult("System is singular or has no unique solution.");
+      setSteps([]);
       onResult("No unique solution");
       return;
     }
 
-    const labels = dimension === 2 ? ["x", "y"] : ["x", "y", "z"];
-    const res = solution
-      .map((value, index) => `${labels[index]} = ${value.toPrecision(10)}`)
-      .join("\n");
-    setResult(res);
-    onResult(res);
+    setResult(evaluation.result);
+    setSteps(evaluation.steps);
+    onResult(evaluation.result);
   };
 
   return (
@@ -80,6 +82,7 @@ export default function LinearSystemCalc({
         Solve Ax = b
       </button>
       {result && <CalcResult value={result} />}
+      <WorkSteps title="Gaussian elimination" steps={steps} />
     </div>
   );
 }

@@ -191,27 +191,58 @@ export function solveTriangle(
   };
 }
 
+function richardsonExtrapolate(values: number[]): number | null {
+  if (values.length < 2) return null;
+
+  let sequence = [...values];
+  while (sequence.length > 1) {
+    const next: number[] = [];
+    for (let i = 0; i < sequence.length - 1; i += 1) {
+      const factor = 2 ** (i + 1);
+      next.push((factor * sequence[i + 1] - sequence[i]) / (factor - 1));
+    }
+    sequence = next;
+  }
+
+  return Number.isFinite(sequence[0]) ? sequence[0] : null;
+}
+
 export function numericalLimit(
   evaluate: (x: number) => number,
   point: number,
   direction: "both" | "left" | "right" = "both",
 ): number | null {
-  const steps = [1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6];
-  const samples: number[] = [];
+  const offsets = [1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8];
+  const rightSamples: number[] = [];
+  const leftSamples: number[] = [];
+  const centralSamples: number[] = [];
 
-  for (const step of steps) {
+  for (const step of offsets) {
     if (direction === "both" || direction === "right") {
       const value = evaluate(point + step);
-      if (Number.isFinite(value)) samples.push(value);
+      if (Number.isFinite(value)) rightSamples.push(value);
     }
     if (direction === "both" || direction === "left") {
       const value = evaluate(point - step);
-      if (Number.isFinite(value)) samples.push(value);
+      if (Number.isFinite(value)) leftSamples.push(value);
+    }
+    if (direction === "both" && rightSamples.length > 0 && leftSamples.length > 0) {
+      const right = evaluate(point + step);
+      const left = evaluate(point - step);
+      if (Number.isFinite(right) && Number.isFinite(left)) {
+        centralSamples.push((right + left) / 2);
+      }
     }
   }
 
-  if (samples.length < 2) return null;
-  return samples[samples.length - 1];
+  const candidates = [
+    richardsonExtrapolate(centralSamples),
+    richardsonExtrapolate(rightSamples),
+    richardsonExtrapolate(leftSamples),
+  ].filter((value): value is number => value !== null);
+
+  if (candidates.length === 0) return null;
+  return candidates[0];
 }
 
 export function simpsonIntegral(

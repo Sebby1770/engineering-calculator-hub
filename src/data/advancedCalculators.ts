@@ -1,6 +1,38 @@
 import { CalculatorConfig } from "@/types";
 
 export const advancedCalculators: CalculatorConfig[] = [
+  {
+    meta: {
+      slug: "equation-solver-calculator",
+      title: "Equation Solver – Quadratic, Cubic, Trig, and General Roots",
+      shortTitle: "Equation Solver",
+      description:
+        "Solve equations with step-by-step working. Supports quadratics with discriminant analysis, cubics, trigonometric equations, exponentials, and general solve(f(x)=0, x).",
+      category: "mathematics",
+      icon: "fx=0",
+      keywords: ["equation solver", "quadratic formula", "roots", "solve for x", "polynomial"],
+      popular: true,
+      new: true,
+    },
+    formula: "ax² + bx + c = 0  →  x = (−b ± √(b² − 4ac)) / 2a",
+    formulaExplanation:
+      "The solver detects equation type automatically. Quadratics show discriminant and root steps. General equations use symbolic root finding with clear solution listing.",
+    exampleUsage:
+      "x² − 5x + 6 = 0 gives x₁ = 3 and x₂ = 2. Cubic and trigonometric equations can also be entered directly.",
+    faqs: [
+      {
+        question: "Can it show the working?",
+        answer:
+          "Yes. The calculator displays labeled steps such as standard form, discriminant, formula substitution, and final roots.",
+      },
+    ],
+    relatedSlugs: [
+      "universal-calculator",
+      "derivative-calculator",
+      "linear-system-calculator",
+      "log-calculator",
+    ],
+  },
   // ─── CALCULUS ────────────────────────────────────────────
   {
     meta: {

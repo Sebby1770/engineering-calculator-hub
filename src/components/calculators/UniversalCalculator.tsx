@@ -1,32 +1,9 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { create, all } from "mathjs";
+import { smartEvaluate } from "@/lib/smartMath";
+import WorkSteps from "@/components/ui/WorkSteps";
 
-const math = create(all);
-
-math.config({
-  number: "BigNumber",
-  precision: 20,
-});
-
-// Harden mathjs against expression-based function injection (defense in depth).
-// This evaluator runs entirely client-side on the user's own input, but we still
-// disable the documented injection vectors so a typed expression can't redefine
-// functions or mutate the math instance.
-math.import(
-  {
-    import: function denied() {
-      throw new Error("import is disabled");
-    },
-    createUnit: function denied() {
-      throw new Error("createUnit is disabled");
-    },
-  },
-  { override: true },
-);
-
-// Reject absurdly long expressions before parsing (cheap DoS guard).
 const MAX_EXPRESSION_LENGTH = 1000;
 
 export default function UniversalCalculator({
@@ -36,20 +13,12 @@ export default function UniversalCalculator({
 }) {
   const [input, setInput] = useState("");
   const [result, setResult] = useState("");
+  const [kind, setKind] = useState("");
+  const [steps, setSteps] = useState<ReturnType<typeof smartEvaluate>["steps"]>([]);
   const [isError, setIsError] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [history, setHistory] = useState<{ input: string; result: string }[]>(
-    [],
-  );
+  const [history, setHistory] = useState<{ input: string; result: string; kind: string }[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  const formatResult = (value: unknown) => {
-    return math.format(value, {
-      precision: 12,
-      lowerExp: -9,
-      upperExp: 12,
-    });
-  };
 
   const calculate = (expression?: string) => {
     const rawExpression = expression ?? inputRef.current?.value ?? input;
@@ -57,28 +26,29 @@ export default function UniversalCalculator({
     if (!trimmedExpression) return;
 
     if (trimmedExpression.length > MAX_EXPRESSION_LENGTH) {
-      setResult(
-        `Expression is too long (max ${MAX_EXPRESSION_LENGTH} characters).`,
-      );
+      setResult(`Expression is too long (max ${MAX_EXPRESSION_LENGTH} characters).`);
       setIsError(true);
+      setSteps([]);
       return;
     }
 
     try {
-      const evaluated = math.evaluate(trimmedExpression);
-      const formattedResult = formatResult(evaluated);
-
-      setResult(formattedResult);
+      const evaluation = smartEvaluate(trimmedExpression);
+      setResult(evaluation.result);
+      setKind(evaluation.kind);
+      setSteps(evaluation.steps);
       setIsError(false);
       setCopied(false);
       setHistory((prev) => [
-        { input: trimmedExpression, result: formattedResult },
+        { input: trimmedExpression, result: evaluation.result, kind: evaluation.kind },
         ...prev.slice(0, 9),
       ]);
-      if (onResult) onResult(formattedResult);
+      if (onResult) onResult(evaluation.result);
     } catch {
       setResult("Invalid expression or unsupported operation");
       setIsError(true);
+      setSteps([]);
+      setKind("");
     }
   };
 
@@ -101,42 +71,32 @@ export default function UniversalCalculator({
   const clear = () => {
     setInput("");
     setResult("");
+    setKind("");
+    setSteps([]);
     setIsError(false);
     inputRef.current?.focus();
   };
 
   const exampleQuestions = [
+    "x^2 - 7*x + 12 = 0",
+    "solve(x^3 - 6*x^2 + 11*x - 6 = 0, x)",
+    "derivative(sin(x)*exp(x), x)",
+    "integrate(x^2*exp(x), x, 0, 1)",
+    "limit(sin(x)/x, x, 0)",
+    "simplify((x^2 - 1)/(x - 1))",
+    "det([[2,3,1],[1,4,0],[0,2,5]])",
     "2 + 3 * sin(45 deg)",
-    "integrate(x^2, x, 0, 2)",
-    "derivative(x^3 + 2*x, x)",
-    "det([[2,3],[1,4]])",
-    "sqrt(-1)",
-    "2^20",
-    "5 m + 30 cm",
-    "solve(x^2 - 5*x + 6 = 0, x)",
   ];
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Input */}
       <div className="mb-3">
         <div className="flex items-baseline justify-between mb-1.5">
           <label className="text-sm font-medium text-surface-600 dark:text-surface-400">
-            Expression
+            Smart expression
           </label>
           <span className="hidden sm:inline text-[11px] font-mono text-surface-400 dark:text-surface-500">
-            <kbd className="px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800">
-              Enter
-            </kbd>{" "}
-            to calculate ·{" "}
-            <kbd className="px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800">
-              Shift
-            </kbd>
-            +
-            <kbd className="px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800">
-              Enter
-            </kbd>{" "}
-            for newline
+            Auto-solves equations, simplifies, differentiates, and integrates
           </span>
         </div>
         <textarea
@@ -144,7 +104,7 @@ export default function UniversalCalculator({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
-          placeholder="2 + 3 * sin(pi/3) or 5 m + 30 cm"
+          placeholder="x^2 - 5*x + 6 = 0  or  derivative(exp(x)*sin(x), x)"
           rows={3}
           spellCheck={false}
           autoCapitalize="off"
@@ -153,23 +113,12 @@ export default function UniversalCalculator({
         />
       </div>
 
-      {/* Action buttons */}
       <div className="flex flex-col sm:flex-row gap-3">
         <button
           onClick={() => calculate()}
           disabled={!input.trim()}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed px-8 py-3 font-semibold text-white transition-colors"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-          >
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
           Calculate
         </button>
         <button
@@ -180,7 +129,6 @@ export default function UniversalCalculator({
         </button>
       </div>
 
-      {/* Result */}
       {result && (
         <div
           className={`mt-5 rounded-xl border p-5 transition-colors ${
@@ -191,14 +139,21 @@ export default function UniversalCalculator({
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <div
-                className={`text-xs font-semibold uppercase tracking-widest ${
-                  isError
-                    ? "text-red-500 dark:text-red-400"
-                    : "text-brand-600 dark:text-brand-400"
-                }`}
-              >
-                {isError ? "Error" : "Result"}
+              <div className="flex items-center gap-2">
+                <div
+                  className={`text-xs font-semibold uppercase tracking-widest ${
+                    isError
+                      ? "text-red-500 dark:text-red-400"
+                      : "text-brand-600 dark:text-brand-400"
+                  }`}
+                >
+                  {isError ? "Error" : "Result"}
+                </div>
+                {!isError && kind && (
+                  <span className="rounded-full bg-brand-100 dark:bg-brand-950 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-700 dark:text-brand-300">
+                    {kind}
+                  </span>
+                )}
               </div>
               <div
                 className={`mt-1.5 break-all font-mono font-bold leading-tight ${
@@ -216,46 +171,18 @@ export default function UniversalCalculator({
                 aria-label="Copy result"
                 className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-surface-300 dark:border-surface-700 bg-white/60 dark:bg-surface-900/60 text-surface-600 dark:text-surface-300 hover:bg-white dark:hover:bg-surface-800 transition-colors"
               >
-                {copied ? (
-                  <>
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M20 6L9 17l-5-5" />
-                    </svg>
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <rect x="9" y="9" width="13" height="13" rx="2" />
-                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-                    </svg>
-                    Copy
-                  </>
-                )}
+                {copied ? "Copied" : "Copy"}
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* Examples */}
+      {!isError && <WorkSteps steps={steps} />}
+
       <div className="mt-6">
         <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-surface-400">
-          Quick examples
+          Smart examples
         </p>
         <div className="flex flex-wrap gap-2">
           {exampleQuestions.map((ex) => (
@@ -273,7 +200,6 @@ export default function UniversalCalculator({
         </div>
       </div>
 
-      {/* History */}
       {history.length > 0 && (
         <div className="mt-6">
           <div className="mb-2 flex items-center justify-between">
@@ -310,8 +236,7 @@ export default function UniversalCalculator({
       )}
 
       <p className="text-center text-xs text-surface-400 mt-6">
-        Powered by mathjs • Supports derivatives, integrals, matrices, complex
-        numbers, units, and advanced expressions
+        Smart mode detects equations, simplifies expressions, and shows step-by-step work
       </p>
     </div>
   );

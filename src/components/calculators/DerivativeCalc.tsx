@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { create, all } from "mathjs";
 import CalcInput from "@/components/ui/CalcInput";
 import CalcResult from "@/components/ui/CalcResult";
-
-const math = create(all);
+import WorkSteps from "@/components/ui/WorkSteps";
+import { derivativeWithSteps } from "@/lib/smartMath";
 
 export default function DerivativeCalc({
   onResult,
@@ -16,18 +15,23 @@ export default function DerivativeCalc({
   const [variable, setVariable] = useState("x");
   const [evaluateAt, setEvaluateAt] = useState("2");
   const [result, setResult] = useState<string | null>(null);
+  const [steps, setSteps] = useState<ReturnType<typeof derivativeWithSteps>["steps"]>([]);
 
   const calculate = () => {
     try {
-      const derivative = math.derivative(expression, variable);
-      const simplified = math.simplify(derivative);
-      const symbolic = simplified.toString();
-      const numeric = simplified.evaluate({ [variable]: parseFloat(evaluateAt) });
-      const res = `f'(${variable}) = ${symbolic}\nf'(${evaluateAt}) = ${math.format(numeric, { precision: 10 })}`;
+      const at = parseFloat(evaluateAt);
+      const evaluation = derivativeWithSteps(
+        expression,
+        variable,
+        Number.isNaN(at) ? undefined : at,
+      );
+      const res = evaluation.steps.map((step) => `${step.label}: ${step.value}`).join("\n");
       setResult(res);
-      onResult(symbolic);
+      setSteps(evaluation.steps);
+      onResult(evaluation.result);
     } catch {
       setResult("Invalid expression. Use variables like x, sin(x), exp(x), ln(x).");
+      setSteps([]);
       onResult("Invalid expression");
     }
   };
@@ -53,6 +57,7 @@ export default function DerivativeCalc({
         Differentiate
       </button>
       {result && <CalcResult value={result} />}
+      <WorkSteps steps={steps} />
     </div>
   );
 }

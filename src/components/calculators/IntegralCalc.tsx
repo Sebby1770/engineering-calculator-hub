@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { create, all } from "mathjs";
 import CalcInput from "@/components/ui/CalcInput";
 import CalcResult from "@/components/ui/CalcResult";
-import { simpsonIntegral } from "@/lib/mathUtils";
-
-const math = create(all);
+import WorkSteps from "@/components/ui/WorkSteps";
+import { integralWithSteps } from "@/lib/smartMath";
 
 export default function IntegralCalc({
   onResult,
@@ -18,6 +16,7 @@ export default function IntegralCalc({
   const [lower, setLower] = useState("0");
   const [upper, setUpper] = useState("2");
   const [result, setResult] = useState<string | null>(null);
+  const [steps, setSteps] = useState<ReturnType<typeof integralWithSteps>["steps"]>([]);
 
   const calculate = () => {
     try {
@@ -25,17 +24,14 @@ export default function IntegralCalc({
       const b = parseFloat(upper);
       if (Number.isNaN(a) || Number.isNaN(b)) return;
 
-      const compiled = math.compile(expression);
-      const definite = simpsonIntegral(
-        (x) => Number(compiled.evaluate({ [variable]: x })),
-        a,
-        b,
-      );
-      const res = `∫[${a}, ${b}] ${expression} d${variable} ≈ ${math.format(definite, { precision: 10 })}`;
+      const evaluation = integralWithSteps(expression, variable, a, b);
+      const res = `∫[${a}, ${b}] ${expression} d${variable} ≈ ${evaluation.result}`;
       setResult(res);
-      onResult(math.format(definite, { precision: 10 }));
+      setSteps(evaluation.steps);
+      onResult(evaluation.result);
     } catch {
       setResult("Invalid expression or bounds. Try polynomials, sin(x), exp(x), or 1/x.");
+      setSteps([]);
       onResult("Invalid expression");
     }
   };
@@ -62,6 +58,7 @@ export default function IntegralCalc({
         Integrate
       </button>
       {result && <CalcResult value={result} />}
+      <WorkSteps steps={steps} />
     </div>
   );
 }
