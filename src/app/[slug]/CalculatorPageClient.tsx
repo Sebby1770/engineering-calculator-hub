@@ -40,6 +40,8 @@ import LinearSystemCalc from "@/components/calculators/LinearSystemCalc";
 import DotCrossProductCalc from "@/components/calculators/DotCrossProductCalc";
 import EigenvalueCalc from "@/components/calculators/EigenvalueCalc";
 import EquationSolverCalc from "@/components/calculators/EquationSolverCalc";
+import EngineeringFormulaTool from "@/components/calculators/EngineeringFormulaTool";
+import { getEngineeringToolBySlug } from "@/data/professionalCalculators";
 
 const CALCULATOR_MAP: Record<
   string,
@@ -87,14 +89,21 @@ export default function CalculatorPageClient({ slug }: { slug: string }) {
   if (!config) return null;
 
   const CalcComponent = CALCULATOR_MAP[slug];
-  if (!CalcComponent) return null;
+  const engineeringTool = getEngineeringToolBySlug(slug);
+  if (!CalcComponent && !engineeringTool) return null;
+
+  const calculatorContent = engineeringTool ? (
+    <EngineeringFormulaTool definition={engineeringTool} onResult={setResult} />
+  ) : CalcComponent ? (
+    <CalcComponent onResult={setResult} />
+  ) : null;
 
   const calculator = config.meta.pro ? (
     <ProGate>
-      <CalcComponent onResult={setResult} />
+      {calculatorContent}
     </ProGate>
   ) : (
-    <CalcComponent onResult={setResult} />
+    calculatorContent
   );
 
   return (

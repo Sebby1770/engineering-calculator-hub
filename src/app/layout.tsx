@@ -15,11 +15,11 @@ const monoFont = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '600'], va
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Engineering Calculator Hub – Free Online Engineering Calculators',
+    default: 'Engineering Calculator Hub – Transparent Tools and Design Workspace',
     template: '%s | Engineering Calculator Hub',
   },
   description:
-    'Free online engineering calculators for electrical engineering, physics, mathematics, and unit conversions. Fast, accurate, and easy to use tools for students and professionals.',
+    'Forty-one transparent engineering calculators, tolerance-aware electrical design tools, and a local-first workspace for review-ready calculation sheets.',
   keywords: [
     'engineering calculator',
     'ohms law calculator',
@@ -35,14 +35,23 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: siteUrl,
     siteName: 'Engineering Calculator Hub',
-    title: 'Engineering Calculator Hub – Free Online Engineering Calculators',
+    title: 'Fast enough for a calculator. Rigorous enough for a design review.',
     description:
-      'Free online engineering calculators for electrical engineering, physics, math, and conversions.',
+      'Forty-one transparent engineering tools plus a local-first workspace for auditable design calculations.',
+    images: [
+      {
+        url: '/og-v2.png',
+        width: 1200,
+        height: 630,
+        alt: 'Engineering Calculator Hub calculation workspace and voltage divider design sheet',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Engineering Calculator Hub',
-    description: 'Free online engineering calculators for students and professionals.',
+    title: 'Fast enough for a calculator. Rigorous enough for a design review.',
+    description: 'Forty-one transparent engineering tools and a project-based calculation workspace.',
+    images: ['/og-v2.png'],
   },
   robots: {
     index: true,

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { calculators, getPopularCalculators } from '@/data/calculators';
+import { calculators } from '@/data/calculators';
 import { categories } from '@/data/categories';
 import CalculatorCard from '@/components/ui/CalculatorCard';
 import CategoryIcon from '@/components/ui/CategoryIcon';
@@ -10,6 +10,17 @@ import { AdBanner } from '@/components/ads';
 import type { CalculatorConfig, Category } from '@/types';
 
 type CategoryFilter = 'all' | Category;
+
+const FEATURED_SLUGS = [
+  'voltage-divider-calculator',
+  'pcb-trace-voltage-drop-calculator',
+  'led-resistor-designer',
+  'adc-resolution-calculator',
+  'battery-runtime-calculator',
+  'series-rlc-resonance-calculator',
+  'three-phase-power-calculator',
+  'ohms-law-calculator',
+];
 
 function matchesSearch(calculator: CalculatorConfig, query: string) {
   const haystack = [
@@ -26,7 +37,10 @@ function matchesSearch(calculator: CalculatorConfig, query: string) {
 }
 
 export default function HomePage() {
-  const popular = getPopularCalculators();
+  const popular = FEATURED_SLUGS.flatMap((slug) => {
+    const calculator = calculators.find((item) => item.meta.slug === slug);
+    return calculator ? [calculator] : [];
+  });
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const searchRef = useRef<HTMLInputElement>(null);
@@ -133,22 +147,31 @@ export default function HomePage() {
             {/* Badge */}
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-200/80 bg-white/70 px-4 py-1.5 text-sm font-medium text-brand-700 shadow-sm backdrop-blur dark:border-brand-800/60 dark:bg-surface-900/70 dark:text-brand-300">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-              {calculators.length} free calculators — no sign-up, ever
+              {calculators.length} transparent engineering tools — core calculations stay free
             </div>
 
             <h1 className="font-display text-4xl font-bold tracking-tight text-surface-950 dark:text-white sm:text-6xl">
-              Engineering{' '}
+              Fast enough for a calculator.{' '}
               <span className="animate-gradient-x bg-gradient-to-r from-brand-600 via-violet-500 to-brand-600 bg-[length:200%_auto] bg-clip-text text-transparent motion-reduce:animate-none dark:from-brand-400 dark:via-violet-400 dark:to-brand-400">
-                Calculator Hub
+                Rigorous enough for a design review.
               </span>
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-surface-600 dark:text-surface-300">
-              Every formula you reach for — circuits, signals, physics, and conversions. Pick a
-              calculator from the menu above, or search below.
+              Transparent formulas, tolerance-aware electrical design tools, and a local-first
+              workspace that turns isolated answers into an auditable calculation sheet.
             </p>
 
+            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link href="/workspace" className="inline-flex items-center justify-center rounded-xl bg-brand-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/20 transition hover:bg-brand-700">
+                Open Engineering Workspace
+              </Link>
+              <a href="#calculators" className="inline-flex items-center justify-center rounded-xl border border-surface-300 bg-white/70 px-6 py-3 text-sm font-bold text-surface-700 backdrop-blur transition hover:border-brand-300 hover:text-brand-700 dark:border-surface-700 dark:bg-surface-900/70 dark:text-surface-200">
+                Explore all calculators
+              </a>
+            </div>
+
             {/* Search */}
-            <div className="mt-8">
+            <div className="mt-7">
               <label htmlFor="calculator-search" className="sr-only">
                 Search calculators
               </label>
@@ -214,7 +237,7 @@ export default function HomePage() {
 
             {/* Trust strip */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-surface-500 dark:text-surface-400">
-              {['Free & open source', 'Runs in your browser', 'Formulas + worked examples'].map((item) => (
+              {['Transparent calculation trail', 'Tolerance-aware designers', 'Local-first project sheets'].map((item) => (
                 <span key={item} className="inline-flex items-center gap-1.5">
                   <svg className="h-4 w-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                     <path d="M20 6L9 17l-5-5" />
@@ -232,7 +255,7 @@ export default function HomePage() {
       </section>
 
       {/* ───────────────────────── Content ───────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+      <section id="calculators" className="scroll-mt-24 mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         {isFiltering ? (
           <>
             <div className="mb-5 flex items-end justify-between gap-4">
@@ -282,7 +305,40 @@ export default function HomePage() {
           </>
         ) : (
           <div className="space-y-14">
-            {/* Popular — the only listing on the page; everything else lives in the menu */}
+            <div className="grid gap-4 lg:grid-cols-3">
+              {[
+                {
+                  eyebrow: 'Calculate',
+                  title: '41 free, deterministic tools',
+                  copy: 'From fundamentals to PCB loss, ADC resolution, filters, battery runtime, and three-phase power.',
+                  href: '#calculators',
+                  action: 'Browse tools',
+                },
+                {
+                  eyebrow: 'Document',
+                  title: 'Build a calculation sheet',
+                  copy: 'Save results into named projects, add assumptions, and export CSV, JSON, or a clean PDF-ready report.',
+                  href: '/workspace',
+                  action: 'Open workspace',
+                },
+                {
+                  eyebrow: 'Upgrade',
+                  title: 'Pay for workflow, not formulas',
+                  copy: 'Pro adds secure cloud projects, device-to-device recovery, and a durable workflow layer around free calculations.',
+                  href: '/pricing',
+                  action: 'See Pro',
+                },
+              ].map((item) => (
+                <Link key={item.title} href={item.href} className="group rounded-2xl border border-surface-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-lg dark:border-surface-800 dark:bg-surface-900 dark:hover:border-brand-800">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-600 dark:text-brand-400">{item.eyebrow}</p>
+                  <h2 className="mt-3 font-display text-xl font-bold text-surface-950 dark:text-white">{item.title}</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-surface-500 dark:text-surface-400">{item.copy}</p>
+                  <span className="mt-5 inline-flex text-sm font-bold text-brand-600 group-hover:translate-x-1 dark:text-brand-400">{item.action} →</span>
+                </Link>
+              ))}
+            </div>
+
+            {/* Popular tools */}
             {popular.length > 0 && (
               <div>
                 <div className="mb-5 flex items-center gap-3">
@@ -293,7 +349,7 @@ export default function HomePage() {
                   </div>
                   <div className="flex items-baseline gap-3">
                     <h2 className="font-display text-xl font-bold text-surface-950 dark:text-white">
-                      Popular calculators
+                      Most-used and new workflows
                     </h2>
                     <span className="rounded-full bg-surface-100 px-2.5 py-0.5 text-xs font-semibold text-surface-500 dark:bg-surface-800 dark:text-surface-400">
                       {popular.length}
@@ -310,7 +366,7 @@ export default function HomePage() {
                   ))}
                 </div>
                 <p className="mt-4 text-sm text-surface-500 dark:text-surface-400">
-                  Looking for something else? Browse all {calculators.length} calculators from the{' '}
+                  Looking for something else? Browse all {calculators.length} tools from the{' '}
                   <strong className="font-semibold text-surface-700 dark:text-surface-200">
                     Calculators
                   </strong>{' '}
@@ -333,10 +389,10 @@ export default function HomePage() {
                 π
               </span>
               <div className="relative">
-                <h2 className="font-display text-2xl font-bold sm:text-3xl">Missing a calculator?</h2>
+                <h2 className="font-display text-2xl font-bold sm:text-3xl">Help shape the next engineering workflow.</h2>
                 <p className="mt-2 max-w-xl leading-relaxed text-brand-100">
-                  Tell us the formula you keep reaching for and we&apos;ll consider it for the next
-                  release — or open an issue and build it with us.
+                  Tell us what you calculate repeatedly, what assumptions you need to capture, and
+                  what a review-ready report must contain. Real workflows set the roadmap.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link

@@ -2,11 +2,14 @@
 node_modules/
 .next/
 out/
+coverage/
 .DS_Store
 .claude/
+.vercel/
+supabase/.temp/
 tsconfig.tsbuildinfo
-.env
-.env*.local
+.env*
 !.env.example
+.npmrc
 
 macOS/DerivedData/

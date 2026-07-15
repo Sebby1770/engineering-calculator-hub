@@ -5,21 +5,20 @@ import { absoluteUrl } from '@/lib/site';
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
-    'How Engineering Calculator Hub handles your data: no accounts, no tracking by default, and clear disclosure of payments, feedback, ads, and local storage.',
+    'How Engineering Calculator Hub handles local projects, optional accounts, cloud sync, payments, feedback, hosting data, and future advertising.',
   alternates: { canonical: absoluteUrl('/privacy') },
 };
-
-const REPO_URL = 'https://github.com/Sebby1770/engineering-calculator-hub';
 
 const sections: { title: string; paragraphs: React.ReactNode[] }[] = [
   {
     title: 'The short version',
     paragraphs: [
       <>
-        Engineering Calculator Hub works without an account. All calculators run in your browser —
-        the numbers you type into them are processed on your device and are never sent to our
-        servers. We collect data in exactly two situations, both started by you: when you make a
-        voluntary support payment, and when you send feedback.
+        Engineering Calculator Hub works without an account. Calculator inputs are processed in
+        your browser and are not sent to our servers merely because you calculate a result. Data is
+        sent only when you choose an online feature: signing in, syncing a Pro workspace (which can
+        include saved results and notes), starting a Stripe payment or subscription, or sending
+        feedback.
       </>,
     ],
   },
@@ -27,9 +26,31 @@ const sections: { title: string; paragraphs: React.ReactNode[] }[] = [
     title: 'Information stored on your device',
     paragraphs: [
       <>
-        Your theme preference (light/dark) and saved favorite calculators are kept in your
-        browser&apos;s local storage. They never leave your device, and clearing your browser data
-        removes them. We do not set any cookies ourselves.
+        Your theme preference, saved favorite calculators, and Engineering Workspace projects are
+        kept in your browser&apos;s local storage. Workspace data can include calculator names,
+        formulas, results, project descriptions, and notes you write. It stays on that device
+        unless you explicitly use Pro cloud sync. Clearing this site&apos;s browser data removes the
+        local copy.
+      </>,
+    ],
+  },
+  {
+    title: 'Accounts and Pro cloud sync (Supabase)',
+    paragraphs: [
+      <>
+        Passwordless accounts are provided by{' '}
+        <a className="text-brand-600 hover:underline dark:text-brand-400" href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">
+          Supabase
+        </a>
+        . When you sign in, Supabase processes your email address and authentication session. We
+        keep a profile record containing your account ID, email, Stripe customer identifier, and
+        subscription identifier, status, and latest billing-event time.
+      </>,
+      <>
+        Pro cloud sync is manual. Choosing “Save cloud” uploads the complete workspace document
+        shown in your browser; choosing “Load cloud” downloads the latest stored copy. Private
+        workspace tables are not directly accessible from the browser and every sync request is
+        authenticated and subscription-checked by our server.
       </>,
     ],
   },
@@ -37,14 +58,15 @@ const sections: { title: string; paragraphs: React.ReactNode[] }[] = [
     title: 'Payments (Stripe)',
     paragraphs: [
       <>
-        Optional support payments are processed by{' '}
+        Optional support payments and Pro subscriptions are processed by{' '}
         <a className="text-brand-600 hover:underline dark:text-brand-400" href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">
           Stripe
         </a>{' '}
         on Stripe&apos;s own checkout pages. Your card details go directly to Stripe and never touch
-        our servers. After a completed payment, Stripe notifies us and we keep a minimal record:
-        the checkout session ID, the amount, the currency, and the payment status. We do not store
-        your name, email, or card information from payments.
+        our servers. For subscriptions, we keep the Stripe customer identifier, price identifier,
+        subscription status, and current billing-period end so we can grant Pro access. One-off
+        support payments keep the checkout session ID, amount, currency, and payment status. We do
+        not store card details.
       </>,
     ],
   },
@@ -74,6 +96,29 @@ const sections: { title: string; paragraphs: React.ReactNode[] }[] = [
     ],
   },
   {
+    title: 'International processing',
+    paragraphs: [
+      <>
+        Our providers operate internationally. The configured Supabase project is hosted in the
+        United States (US East), and Vercel and Stripe may process data in other countries under
+        their published privacy and data-transfer arrangements. By choosing an online feature,
+        your relevant data may therefore be processed outside your country.
+      </>,
+    ],
+  },
+  {
+    title: 'Security and incident response',
+    paragraphs: [
+      <>
+        We use transport encryption, server-only credentials, signed payment webhooks, access
+        controls, row-level database security, request validation, and rate limits. No internet
+        service can promise absolute security. If we become aware of a data breach, we will assess
+        it, contain it, notify affected people and regulators where legally required, and rotate
+        affected credentials.
+      </>,
+    ],
+  },
+  {
     title: 'Advertising',
     paragraphs: [
       <>
@@ -92,14 +137,14 @@ const sections: { title: string; paragraphs: React.ReactNode[] }[] = [
     title: 'Data retention and your rights',
     paragraphs: [
       <>
-        Payment records are retained for accounting purposes. Feedback is kept only as long as it
-        is useful for improving the site. You can ask us to show or delete the data we hold about
-        you (for example, a feedback message you sent) by opening an issue on{' '}
-        <a className="text-brand-600 hover:underline dark:text-brand-400" href={`${REPO_URL}/issues`} target="_blank" rel="noopener noreferrer">
-          GitHub
-        </a>
-        . If you are in a region with specific privacy rights (such as the GDPR or the Australian
-        Privacy Act), those rights apply to this data.
+        Payment records are retained for accounting and fraud-prevention purposes. Account,
+        workspace, and feedback data are kept while the relevant feature remains active or useful.
+        You can remove local workspace data by clearing this site&apos;s browser storage. You can ask
+        us to access, correct, export, or delete account, cloud-workspace, or feedback data through
+        the private <Link className="text-brand-600 hover:underline dark:text-brand-400" href="/feedback">feedback form</Link>.
+        We will verify your identity before changing account-linked data. Some payment and security
+        records may be retained where required for tax, accounting, dispute, or fraud-prevention
+        purposes.
       </>,
     ],
   },
@@ -107,9 +152,8 @@ const sections: { title: string; paragraphs: React.ReactNode[] }[] = [
     title: 'Children',
     paragraphs: [
       <>
-        The site is a general-audience educational tool and does not knowingly collect personal
-        information from children. The only personal data we ever receive is what is voluntarily
-        typed into the feedback form.
+        The site is a general-audience engineering and educational tool and does not knowingly
+        collect personal information from children.
       </>,
     ],
   },
@@ -126,11 +170,12 @@ const sections: { title: string; paragraphs: React.ReactNode[] }[] = [
     title: 'Contact',
     paragraphs: [
       <>
-        For any privacy question or request, contact the site owner via{' '}
-        <a className="text-brand-600 hover:underline dark:text-brand-400" href={`${REPO_URL}/issues`} target="_blank" rel="noopener noreferrer">
-          GitHub issues
-        </a>
-        .
+        For a privacy question, complaint, or data request, use the{' '}
+        <Link className="text-brand-600 hover:underline dark:text-brand-400" href="/feedback">
+          private feedback form
+        </Link>
+        . Do not place personal information in a public GitHub issue. We will investigate privacy
+        complaints and respond within a reasonable period.
       </>,
     ],
   },
@@ -145,7 +190,7 @@ export default function PrivacyPage() {
       <h1 className="mt-2 font-display text-3xl font-bold text-surface-900 dark:text-white">
         Privacy Policy
       </h1>
-      <p className="mt-3 text-sm text-surface-500 dark:text-surface-400">Last updated June 10, 2026</p>
+      <p className="mt-3 text-sm text-surface-500 dark:text-surface-400">Last updated July 15, 2026</p>
 
       <div className="mt-8 space-y-8">
         {sections.map((section) => (

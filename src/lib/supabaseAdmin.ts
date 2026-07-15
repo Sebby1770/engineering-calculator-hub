@@ -1,3 +1,5 @@
+import 'server-only';
+
 // Minimal server-only Supabase REST client (no extra dependencies).
 //
 // SECURITY MODEL: every table denies the anon/authenticated client roles
@@ -9,7 +11,7 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-type TableName = 'donations' | 'feedback' | 'profiles';
+type TableName = 'donations' | 'feedback' | 'profiles' | 'workspace_documents';
 
 export function isSupabaseConfigured() {
   return Boolean(SUPABASE_URL && SERVICE_ROLE_KEY);
@@ -90,9 +92,10 @@ export async function upsertRow(
 export async function patchRows(
   table: TableName,
   match: Record<string, string>,
-  values: Record<string, unknown>
+  values: Record<string, unknown>,
+  filters: Record<string, string> = {},
 ): Promise<DbResult> {
-  const params: Record<string, string> = {};
+  const params: Record<string, string> = { ...filters };
   for (const [column, value] of Object.entries(match)) {
     params[column] = `eq.${value}`;
   }

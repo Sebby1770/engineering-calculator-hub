@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { isSupabaseConfigured, insertRow, upsertRow, patchRows } from '@/lib/supabaseAdmin';
+import { readTextWithLimit } from '@/lib/requestBody';
 
 export const runtime = 'nodejs';
+
+const MAX_WEBHOOK_BYTES = 1_000_000;
 
 function getStripeClient() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -40,17 +43,23 @@ export async function POST(request: Request) {
 
   let event: Stripe.Event;
   try {
-    const body = await request.text();
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    const bodyResult = await readTextWithLimit(request, MAX_WEBHOOK_BYTES);
+    if (!bodyResult.ok && bodyResult.reason === 'too_large') {
+      return NextResponse.json({ error: 'Webhook payload is too large.' }, { status: 413 });
+    }
+    if (!bodyResult.ok) {
+      return NextResponse.json({ error: 'Unable to read webhook payload.' }, { status: 400 });
+    }
+    event = stripe.webhooks.constructEvent(bodyResult.text, signature, webhookSecret);
   } catch (error) {
     console.error('Stripe webhook signature verification failed:', error);
     return NextResponse.json({ error: 'Invalid Stripe webhook payload.' }, { status: 400 });
   }
 
   if (!isSupabaseConfigured()) {
-    // Nothing to persist into; acknowledge so Stripe doesn't retry forever.
-    console.info('Stripe event received (persistence skipped, Supabase not configured):', event.type);
-    return NextResponse.json({ received: true });
+    // Fail closed so Stripe retries after a transient configuration incident;
+    // acknowledging here would silently lose subscription entitlements.
+    return NextResponse.json({ error: 'Webhook persistence is unavailable.' }, { status: 503 });
   }
 
   if (event.type === 'checkout.session.completed') {
@@ -81,19 +90,30 @@ export async function POST(request: Request) {
       // Supabase user (client_reference_id carries the user id we set at
       // checkout creation).
       const customerId = getCustomerId(session.customer);
-      let status: string | null = 'active';
-      let priceId: string | null = null;
-      let periodEnd: string | null = null;
+      if (typeof session.subscription !== 'string' || !customerId) {
+        console.error('Completed subscription checkout is missing its subscription or customer id.');
+        return NextResponse.json({ error: 'Incomplete subscription event.' }, { status: 500 });
+      }
 
-      if (typeof session.subscription === 'string') {
-        try {
-          const subscription = await stripe.subscriptions.retrieve(session.subscription);
-          status = subscription.status;
-          priceId = subscription.items?.data?.[0]?.price?.id ?? null;
-          periodEnd = getPeriodEnd(subscription);
-        } catch (error) {
-          console.error('Failed to retrieve subscription after checkout:', error);
-        }
+      let subscription: Stripe.Subscription;
+      try {
+        subscription = await stripe.subscriptions.retrieve(session.subscription);
+      } catch (error) {
+        console.error('Failed to retrieve subscription after checkout:', error);
+        return NextResponse.json({ error: 'Unable to verify subscription.' }, { status: 500 });
+      }
+      const priceId = subscription.items?.data?.[0]?.price?.id ?? null;
+      const expectedPriceId = process.env.STRIPE_PRO_PRICE_ID;
+      const metadataUserId = subscription.metadata?.supabase_user_id;
+      if (!expectedPriceId) {
+        return NextResponse.json({ error: 'Pro billing is not configured.' }, { status: 503 });
+      }
+      if (metadataUserId !== session.client_reference_id) {
+        console.error('Subscription metadata does not match its Checkout session user.');
+        return NextResponse.json({ error: 'Unexpected subscription owner.' }, { status: 500 });
+      }
+      if (priceId !== expectedPriceId) {
+        console.error('Subscription checkout price does not match STRIPE_PRO_PRICE_ID.');
       }
 
       const stored = await upsertRow(
@@ -101,9 +121,11 @@ export async function POST(request: Request) {
         {
           id: session.client_reference_id,
           stripe_customer_id: customerId,
-          subscription_status: status,
+          stripe_subscription_id: subscription.id,
+          subscription_status: subscription.status,
           price_id: priceId,
-          current_period_end: periodEnd,
+          current_period_end: getPeriodEnd(subscription),
+          stripe_event_created_at: event.created,
           updated_at: new Date().toISOString(),
         },
         'id'
@@ -118,17 +140,24 @@ export async function POST(request: Request) {
   if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
     const subscription = event.data.object;
     const customerId = getCustomerId(subscription.customer);
+    const priceId = subscription.items?.data?.[0]?.price?.id ?? null;
     if (customerId) {
       const status = event.type === 'customer.subscription.deleted' ? 'canceled' : subscription.status;
+      const orderingOperator = event.type === 'customer.subscription.deleted' ? 'lte' : 'lt';
       const stored = await patchRows(
         'profiles',
-        { stripe_customer_id: customerId },
+        { stripe_subscription_id: subscription.id },
         {
+          stripe_customer_id: customerId,
           subscription_status: status,
-          price_id: subscription.items?.data?.[0]?.price?.id ?? null,
+          price_id: priceId,
           current_period_end: getPeriodEnd(subscription),
+          stripe_event_created_at: event.created,
           updated_at: new Date().toISOString(),
-        }
+        },
+        {
+          or: `(stripe_event_created_at.is.null,stripe_event_created_at.${orderingOperator}.${event.created})`,
+        },
       );
       if (!stored.ok) {
         console.error('Failed to sync subscription, status:', stored.status);

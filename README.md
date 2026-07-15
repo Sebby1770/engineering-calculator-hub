@@ -1,6 +1,8 @@
 # Engineering Calculator Hub
 
-A modern, SEO-optimized engineering calculator website built with Next.js, designed for passive income via ad revenue and optional Stripe Checkout support. Features 33 fully interactive calculators across 8 categories — including calculus, geometry, and linear algebra — with a smart math engine that shows step-by-step work, SEO optimization, ad placements, and scalable architecture.
+A commercial-ready engineering calculation workspace built with Next.js. Version 2.0 includes 41 deterministic calculators across 8 categories, a local-first project notebook, calculation-sheet exports, secure Pro cloud-sync architecture, Stripe subscriptions, and a smart math engine that shows its work.
+
+The product strategy is deliberately simple: core formulas remain free and indexable; Pro monetizes the workflow around them through cloud backup, device-to-device recovery, and workflow convenience.
 
 ## Tech Stack
 
@@ -12,15 +14,25 @@ A modern, SEO-optimized engineering calculator website built with Next.js, desig
 
 ## Features
 
-### Calculators (33 included)
+### Calculators (41 included)
 
-- **Electrical**: Ohm's Law (with steps), Voltage Divider, Resistor Color Code, RC Time Constant, Power, Parallel/Series Resistors
+- **Electrical**: Ohm's Law (with steps), tolerance-aware E24 Voltage Divider Designer, Resistor Color Code, RC Time Constant, Power, Parallel/Series Resistors, LED Resistor Designer, PCB Trace Drop, Three-Phase Power, Battery Runtime
 - **Mathematics**: Universal Calculator (smart mode), Equation Solver, Scientific Calculator, Log Calculator, Binary/Hex/Decimal Converter
 - **Calculus**: Derivative, Integral, Limit, ODE Solver, Taylor Series
 - **Geometry**: Triangle Solver, Circle, Pythagorean Theorem, 3D Volume, Distance
 - **Linear Algebra**: Determinant, Matrix Inverse, Matrix Multiply, Linear System Solver, Dot/Cross Product, Eigenvalues
 - **Physics**: Energy, Frequency, Wavelength
 - **Conversions**: dB↔Voltage, Frequency↔Period
+- **Signals & Systems**: Series RLC Resonance, ADC Resolution, RC Low-Pass Filter Designer
+
+### Engineering Workspace
+
+- Save any calculated result into a named design project
+- Preserve the formula, result, timestamp, assumptions, and project notes
+- Export project sheets as CSV or JSON
+- Print a clean review-ready sheet or save it as PDF
+- Local-first by default: no account is required and calculations stay on the device
+- Optional Pro cloud backup through an authenticated, size-limited server route
 
 ### SEO Optimization
 
@@ -32,7 +44,14 @@ A modern, SEO-optimized engineering calculator website built with Next.js, desig
 - SEO-optimized titles, descriptions, and keywords
 - FAQ sections on every calculator page
 
-### Monetization (Ad Placements)
+### Monetization
+
+- **Free**: every core calculator, worked steps, local projects, and exports
+- **Pro**: Stripe subscription for secure cloud backup, up to 100 synced projects, device-to-device recovery, and priority requests
+- **Future Team / Embed**: shared templates, review history, branded reports, and white-label manufacturer calculators
+- **Ads**: optional and disabled by default; kept secondary to subscription and partner revenue
+
+### Optional Ad Placements
 
 5 ad placement zones ready for any provider:
 
@@ -60,6 +79,9 @@ Supports:
 - Copy result to clipboard
 - Share calculator via Web Share API or clipboard
 - Save favorites (localStorage)
+- Save results into local design projects
+- Add engineering assumptions and notes
+- CSV, JSON, and print-to-PDF project export
 - Keyboard input support
 - Responsive on all devices
 
@@ -82,6 +104,9 @@ npm run dev
 
 # Run all local checks
 npm run check
+
+# Run deterministic calculator and workspace tests
+npm test
 
 # Build for production
 npm run build
@@ -269,12 +294,23 @@ The support button is hidden unless `NEXT_PUBLIC_STRIPE_ENABLED=true`. Checkout 
 
 ## Connecting Supabase
 
-A Supabase project (`engineering-calculator-hub`, region `us-east-1`) backs two small, server-only tables:
+A Supabase project (`engineering-calculator-hub`, region `us-east-1`) backs the server-side product data:
 
 - `donations` — written by the Stripe webhook (session ID, amount, currency, status)
 - `feedback` — written by the `/feedback` form (message + optional email)
+- `profiles` — account and Stripe subscription state
+- `workspace_documents` — the latest validated Pro cloud-workspace document for each user
 
-Both tables have **row-level security enabled with zero policies and revoked client grants**, so they are completely inaccessible with the public anon key — all access goes through server API routes using the service-role key.
+Tables have **row-level security enabled with revoked client grants**, so private application data is inaccessible with the public key — access goes through authenticated server API routes using the service-role key.
+
+The complete commercial schema is versioned in:
+
+```text
+supabase/migrations/20260710151234_workspace_documents.sql
+supabase/migrations/20260712114421_commercial_backend_hardening.sql
+```
+
+Apply both migrations to the linked project before enabling accounts, billing, feedback, or Pro cloud sync. The second migration versions the account/payment/feedback tables, database constraints, indexes, auth-profile trigger, forced RLS, and least-privilege grants. The browser can only sync through the authenticated, subscription-and-price-checked `/api/workspace` route.
 
 To connect a deployment:
 
@@ -287,18 +323,21 @@ SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 ```
 
-Without these variables the site still works: the feedback form reports "not configured" and the webhook simply skips persistence.
+Without these variables the free calculators and local workspace still work. The feedback form reports "not configured", cloud sync stays unavailable, and signed Stripe webhooks return a retryable 503 rather than silently losing payment or entitlement data.
 
 ## Turning it into a SaaS (accounts + Pro subscriptions)
 
 The SaaS plumbing is built in and switches on with configuration — no code changes needed:
 
-- **Accounts**: passwordless **magic-link sign-in** via Supabase Auth (`/account`). A `profiles`
-  row is auto-created for every user (RLS: each user can read only their own row).
+- **Accounts**: passwordless **magic-link sign-in** via Supabase Auth (`/account`). A locked
+  database trigger creates the `profiles` row; private profile and workspace data are read only
+  through server routes after token verification.
 - **Pro subscription**: `/api/billing/subscribe` creates a Stripe Checkout session in
   `subscription` mode; the webhook keeps `profiles.subscription_status` in sync
   (`checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`);
   `/api/billing/portal` opens the Stripe Billing Portal for self-serve cancel/upgrade.
+- **Entitlements**: Pro requires an active/trialing subscription on the exact configured
+  `STRIPE_PRO_PRICE_ID`; another Stripe product cannot accidentally grant access.
 - **Gating**: mark any calculator with `pro: true` in `src/data/calculators.ts` and it renders
   behind a sign-in/upgrade gate (verified server-side via `/api/me/subscription`). Until you mark
   one, nothing is paywalled. Note: calculators run client-side, so the gate is a product
@@ -306,7 +345,7 @@ The SaaS plumbing is built in and switches on with configuration — no code cha
 
 Setup:
 
-1. **Stripe**: create a **recurring** price (e.g. "Pro — $5/month") → set `STRIPE_PRO_PRICE_ID`.
+1. **Stripe**: create a **recurring** price (the launch page tests "Pro — $9/month") → set `STRIPE_PRO_PRICE_ID`.
    Add `customer.subscription.updated` and `customer.subscription.deleted` to your webhook
    endpoint's events (alongside `checkout.session.completed`). Enable the **Billing Portal**
    (Settings → Billing → Customer portal).
@@ -319,6 +358,9 @@ Setup:
 
 Everything degrades gracefully: with no configuration, `/account` explains accounts are off and
 Pro-gated calculators stay open.
+
+For the production threat model, Vercel Firewall rule, secret-rotation procedure, backup plan,
+incident response, and paid-launch checklist, read [`SECURITY.md`](SECURITY.md).
 
 ## Deployment
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import type { Session } from '@supabase/supabase-js';
 import { getSupabaseBrowser } from '@/lib/supabaseClient';
 
@@ -253,8 +254,8 @@ export default function AccountClient() {
                 )}
                 {!isPro && (
                   <p className="mt-1 max-w-md text-sm leading-relaxed text-surface-500 dark:text-surface-400">
-                    Pro unlocks calculators marked as premium and supports development of the
-                    hub.
+                    Every core calculator stays free. Pro adds secure cloud workspace backup,
+                    up to 100 synced projects, device-to-device recovery, and priority requests.
                   </p>
                 )}
               </div>
@@ -269,6 +270,14 @@ export default function AccountClient() {
                 >
                   {busy === 'upgrade' ? 'Opening checkout…' : 'Upgrade to Pro'}
                 </button>
+              )}
+              {!isPro && (
+                <Link
+                  href="/pricing"
+                  className="rounded-lg border border-surface-300 px-5 py-2.5 text-sm font-medium text-surface-700 transition-colors hover:bg-surface-50 dark:border-surface-700 dark:text-surface-200 dark:hover:bg-surface-800"
+                >
+                  Compare plans
+                </Link>
               )}
               {subscription?.hasBilling && (
                 <button

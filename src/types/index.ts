@@ -34,6 +34,11 @@ export interface CalculatorConfig {
   exampleUsage: string;
   faqs: FAQ[];
   relatedSlugs: string[];
+  quality?: {
+    label: string;
+    summary: string;
+    lastReviewed: string;
+  };
 }
 
 export interface CategoryInfo {

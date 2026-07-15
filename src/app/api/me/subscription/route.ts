@@ -40,13 +40,18 @@ export async function GET(request: Request) {
     { id: user.id },
     'subscription_status,price_id,current_period_end,stripe_customer_id'
   );
+  if (profiles === null) {
+    return NextResponse.json({ error: 'Subscription data is temporarily unavailable.' }, { status: 503 });
+  }
   const profile = profiles?.[0];
   const status = profile?.subscription_status ?? null;
+  const expectedPriceId = process.env.STRIPE_PRO_PRICE_ID;
+  const hasProPrice = Boolean(expectedPriceId && profile?.price_id === expectedPriceId);
 
   return NextResponse.json({
-    configured: true,
+    configured: Boolean(expectedPriceId),
     email: user.email,
-    active: status !== null && ACTIVE_STATUSES.has(status),
+    active: status !== null && ACTIVE_STATUSES.has(status) && hasProPrice,
     status,
     priceId: profile?.price_id ?? null,
     currentPeriodEnd: profile?.current_period_end ?? null,
