@@ -1,3 +1,5 @@
+import 'server-only';
+
 // Server-side verification of a Supabase access token (sent by the browser as
 // an Authorization: Bearer header). The token is validated against Supabase's
 // auth endpoint — never trusted as-is.

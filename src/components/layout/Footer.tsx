@@ -22,7 +22,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-sm text-surface-500 dark:text-surface-400 leading-relaxed">
-              Free engineering calculators for students, engineers, and professionals. Fast, accurate, and easy to use.
+              Transparent engineering calculations, design workflows, and review-ready project sheets for students and practising engineers.
             </p>
             <div className="mt-4">
               <SupportCheckoutButton />
@@ -60,6 +60,8 @@ export default function Footer() {
           <div className="flex items-center gap-4 text-xs text-surface-400">
             <Link href="/privacy" className="hover:text-brand-500 transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-brand-500 transition-colors">Terms</Link>
+            <Link href="/workspace" className="hover:text-brand-500 transition-colors">Workspace</Link>
+            <Link href="/pricing" className="hover:text-brand-500 transition-colors">Pricing</Link>
             <Link href="/about" className="hover:text-brand-500 transition-colors">About</Link>
             <Link href="/feedback" className="hover:text-brand-500 transition-colors">Feedback</Link>
             <a

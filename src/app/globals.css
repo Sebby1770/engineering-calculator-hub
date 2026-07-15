@@ -68,3 +68,30 @@
       linear-gradient(to bottom, rgb(148 163 184 / 0.07) 1px, transparent 1px);
   }
 }
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  header,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: white !important;
+    color: #0f172a !important;
+  }
+
+  .workspace-print {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
+}

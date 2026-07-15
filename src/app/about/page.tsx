@@ -8,7 +8,7 @@ import CategoryIcon from '@/components/ui/CategoryIcon';
 export const metadata: Metadata = {
   title: 'About Engineering Calculator Hub',
   description:
-    'Learn about Engineering Calculator Hub, a collection of fast, free calculators for engineering, physics, math, and conversions.',
+    'Learn about Engineering Calculator Hub, a transparent calculation workspace for engineering design, documentation, and review.',
   alternates: { canonical: absoluteUrl('/about') },
 };
 
@@ -27,21 +27,22 @@ export default function AboutPage() {
             About
           </p>
           <h1 className="mt-2 font-display text-3xl font-bold text-surface-900 dark:text-white">
-            Engineering tools that stay quick and clear
+            Engineering calculations that stay transparent and connected
           </h1>
           <p className="mt-4 leading-relaxed text-surface-600 dark:text-surface-400">
             Engineering Calculator Hub is built for students, engineers, makers, and anyone who
-            needs dependable answers without digging through spreadsheets or bloated tools. Today
+            needs dependable answers without rebuilding the same spreadsheet. Today
             the library covers {calculators.length} calculators across{' '}
             {populatedCategories.length} categories — every one with its formula, a worked example,
-            and FAQs.
+            and FAQs. Results can be collected into a local-first project sheet with assumptions
+            and exports for review.
           </p>
         </section>
 
         <section className="grid gap-4 sm:grid-cols-3">
           {[
             ['Fast', 'Every page is statically generated and the math runs instantly in your browser.'],
-            ['Private', 'No accounts, no tracking. What you type into a calculator never leaves your device.'],
+            ['Local-first', 'Calculations and project sheets stay on your device unless you explicitly use optional Pro cloud sync.'],
             ['Open', 'The entire site is open source under the MIT licence — read it, audit it, contribute.'],
           ].map(([title, body]) => (
             <div key={title} className="rounded-lg border border-surface-200 p-5 dark:border-surface-800">
@@ -101,13 +102,13 @@ export default function AboutPage() {
             >
               GitHub
             </a>
-            . If the site saves you time, the Support button in the header lets you chip in.
+            . If the workflow saves you time, Pro adds secure cloud backup and device-to-device recovery.
           </p>
           <Link
-            href="/"
+            href="/workspace"
             className="mt-4 inline-flex rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
           >
-            View calculators
+            Open the workspace
           </Link>
         </section>
       </div>

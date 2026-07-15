@@ -37,11 +37,13 @@ export async function generateMetadata({ params }: CalculatorPageProps): Promise
       description: meta.description,
       url: pageUrl,
       type: 'website',
+      images: ['/og-v2.png'],
     },
     twitter: {
       card: 'summary',
       title: meta.title,
       description: meta.description,
+      images: ['/og-v2.png'],
     },
     alternates: {
       canonical: pageUrl,
@@ -64,15 +66,11 @@ export default async function CalculatorPage({ params }: CalculatorPageProps) {
     url: pageUrl,
     applicationCategory: 'UtilityApplication',
     operatingSystem: 'Any',
+    isAccessibleForFree: true,
     offers: {
       '@type': 'Offer',
       price: '0',
       priceCurrency: 'USD',
-    },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      ratingCount: '150',
     },
   };
 

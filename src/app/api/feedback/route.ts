@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { isAllowedOrigin } from '@/lib/requestGuards';
+import { readTextWithLimit } from '@/lib/requestBody';
 import { isSupabaseConfigured, insertRow } from '@/lib/supabaseAdmin';
 
 export const runtime = 'nodejs';
@@ -9,11 +10,12 @@ export const dynamic = 'force-dynamic';
 const MESSAGE_MIN = 10;
 const MESSAGE_MAX = 2000;
 const EMAIL_MAX = 320;
+const MAX_BODY_BYTES = 16_384;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
   // 1. Reject cross-site requests (CSRF protection).
-  if (!isAllowedOrigin(request.headers.get('origin'))) {
+  if (!isAllowedOrigin(request)) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
@@ -33,7 +35,24 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  const bodyResult = await readTextWithLimit(request, MAX_BODY_BYTES);
+  if (!bodyResult.ok && bodyResult.reason === 'too_large') {
+    return NextResponse.json({ error: 'Request body is too large.' }, { status: 413 });
+  }
+  if (!bodyResult.ok) {
+    return NextResponse.json({ error: 'Unable to read request body.' }, { status: 400 });
+  }
+  const raw = bodyResult.text;
+
+  let body: Record<string, unknown> | null = null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    body = typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    body = null;
+  }
   if (!body) {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }

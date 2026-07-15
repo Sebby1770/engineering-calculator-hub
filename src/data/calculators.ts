@@ -1,5 +1,6 @@
 import { CalculatorConfig } from "@/types";
 import { advancedCalculators } from "@/data/advancedCalculators";
+import { professionalCalculatorConfigs } from "@/data/professionalCalculators";
 
 const baseCalculators: CalculatorConfig[] = [
   // ─── ELECTRICAL ──────────────────────────────────────────
@@ -53,18 +54,18 @@ const baseCalculators: CalculatorConfig[] = [
   {
     meta: {
       slug: "voltage-divider-calculator",
-      title: "Voltage Divider Calculator – Compute Output Voltage Online",
+      title: "Voltage Divider Designer – E24 Values, Loading & Tolerance",
       shortTitle: "Voltage Divider",
       description:
-        "Calculate output voltage of a resistive voltage divider circuit. Enter R1, R2, and input voltage to find Vout instantly. Free online tool with formula and examples.",
+        "Design a practical E24 resistive divider or analyse known values with load resistance, tolerance corners, source current, output impedance, and resistor power.",
       category: "electrical",
       icon: "÷",
       keywords: ["voltage divider", "resistive divider", "Vout", "R1 R2"],
       popular: true,
     },
-    formula: "Vout = Vin × (R2 / (R1 + R2))",
+    formula: "Vout = Vin × ((R2 ‖ Rload) / (R1 + (R2 ‖ Rload)))",
     formulaExplanation:
-      "A voltage divider consists of two resistors in series. The output voltage is taken across the second resistor (R2). The output is a fraction of the input voltage determined by the ratio of R2 to the total resistance. This is widely used for biasing, signal attenuation, and sensor interfacing.",
+      "A voltage divider consists of two series resistors with the output taken across R2. A connected load appears in parallel with R2 and changes the ratio. The design mode searches preferred E24 pairs, while analysis includes loading, tolerance corners, Thevenin output resistance, current, and dissipation.",
     exampleUsage:
       "With Vin = 12V, R1 = 10kΩ, and R2 = 5kΩ, the output voltage is Vout = 12 × (5000 / (10000 + 5000)) = 12 × 0.333 = 4V.",
     faqs: [
@@ -83,6 +84,11 @@ const baseCalculators: CalculatorConfig[] = [
         answer:
           "Adding a load in parallel with R2 reduces the effective resistance and lowers the output voltage. For minimal loading effect, the load resistance should be at least 10× larger than R2.",
       },
+      {
+        question: "How are the worst-case limits calculated?",
+        answer:
+          "The low corner combines minimum input voltage, maximum R1, and minimum R2. The high corner combines maximum input voltage, minimum R1, and maximum R2 while holding the entered load fixed.",
+      },
     ],
     relatedSlugs: [
       "ohms-law-calculator",
@@ -90,6 +96,12 @@ const baseCalculators: CalculatorConfig[] = [
       "series-resistor-calculator",
       "power-calculator",
     ],
+    quality: {
+      label: "Automated reference cases",
+      summary:
+        "Loaded-divider analysis, tolerance corners, and E24 synthesis are covered by reproducible tests with known reference cases.",
+      lastReviewed: "15 July 2026",
+    },
   },
   {
     meta: {
@@ -616,6 +628,7 @@ const baseCalculators: CalculatorConfig[] = [
 export const calculators: CalculatorConfig[] = [
   ...baseCalculators,
   ...advancedCalculators,
+  ...professionalCalculatorConfigs,
 ];
 
 export function getCalculatorBySlug(

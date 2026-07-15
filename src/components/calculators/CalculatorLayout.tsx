@@ -9,6 +9,7 @@ import CopyButton from '@/components/ui/CopyButton';
 import ShareButton from '@/components/ui/ShareButton';
 import FavoriteButton from '@/components/ui/FavoriteButton';
 import CalculatorCard from '@/components/ui/CalculatorCard';
+import SaveToWorkspaceButton from '@/components/workspace/SaveToWorkspaceButton';
 import { AdBanner, AdSidebar, AdInContent, AdBetweenCards } from '@/components/ads';
 
 interface CalculatorLayoutProps {
@@ -50,6 +51,13 @@ export default function CalculatorLayout({ config, result, children }: Calculato
             <p className="text-surface-600 dark:text-surface-400 leading-relaxed max-w-2xl">
               {meta.description}
             </p>
+            {config.quality && (
+              <div className="mt-3 inline-flex flex-wrap items-center gap-x-2 gap-y-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300">
+                <span className="font-bold">✓ {config.quality.label}</span>
+                <span className="text-emerald-600 dark:text-emerald-500">•</span>
+                <span>Tests updated {config.quality.lastReviewed}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 mt-3">
               {result && <CopyButton text={result} />}
               <ShareButton title={meta.title} />
@@ -60,6 +68,23 @@ export default function CalculatorLayout({ config, result, children }: Calculato
           {/* Calculator UI */}
           <div className="rounded-xl border border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-5 sm:p-6 mb-8 shadow-sm">
             {children}
+            {result && (
+              <div className="mt-5 border-t border-surface-200 pt-4 dark:border-surface-800">
+                <SaveToWorkspaceButton
+                  calculatorSlug={meta.slug}
+                  calculatorTitle={meta.shortTitle}
+                  formula={formula}
+                  result={result}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="mb-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/25 dark:text-amber-200" role="note">
+            <strong>Engineering verification required.</strong> This reference tool is not a
+            certified design, safety, or compliance calculation. Check units, assumptions,
+            tolerances, datasheets, and the standards that apply to your project before relying on
+            a result. <Link href="/terms" className="font-semibold underline underline-offset-2">Read the terms.</Link>
           </div>
 
           {/* In-content ad */}
@@ -78,6 +103,14 @@ export default function CalculatorLayout({ config, result, children }: Calculato
             <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
               {formulaExplanation}
             </p>
+            {config.quality && (
+              <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+                <h3 className="text-sm font-bold text-emerald-900 dark:text-emerald-200">Calculation quality</h3>
+                <p className="mt-1 text-sm leading-relaxed text-emerald-800 dark:text-emerald-300">
+                  {config.quality.summary}
+                </p>
+              </div>
+            )}
           </section>
 
           {/* Example */}
@@ -112,6 +145,7 @@ export default function CalculatorLayout({ config, result, children }: Calculato
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
+                        aria-hidden="true"
                       >
                         <path d="M6 9l6 6 6-6" />
                       </svg>

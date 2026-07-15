@@ -1,13 +1,26 @@
 /** @type {import('next').NextConfig} */
 
 const isDev = process.env.NODE_ENV !== 'production';
+const adsEnabled = process.env.NEXT_PUBLIC_AD_ENABLED === 'true';
+
+function configuredOrigin(value) {
+  if (!value) return null;
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+const supabaseOrigin = configuredOrigin(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+);
 
 // Content Security Policy.
 // - 'unsafe-inline' is required for Next.js's inline bootstrap/runtime scripts and
 //   for the inline JSON-LD structured data (we are not using per-request nonces).
 // - 'unsafe-eval' is added in development only, for React Fast Refresh.
-// - Google AdSense domains are pre-allowed so ads keep working if/when
-//   NEXT_PUBLIC_AD_ENABLED is set to "true". Tighten these if you do not use ads.
+// - Google AdSense domains are allowed only when ads are explicitly enabled.
 // NOTE: deliberately no `upgrade-insecure-requests` — Safari applies it even to
 // http://localhost, silently breaking CSS/JS when previewing production builds
 // locally. HTTPS on the real domain is already enforced by HSTS + the host's
@@ -21,9 +34,11 @@ const cspDirectives = [
   "font-src 'self' data:",
   "img-src 'self' data: https:",
   "style-src 'self' 'unsafe-inline'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://pagead2.googlesyndication.com https://partner.googleadservices.com https://www.googletagservices.com https://adservice.google.com`,
-  "connect-src 'self' https://pagead2.googlesyndication.com",
-  "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}${adsEnabled ? ' https://pagead2.googlesyndication.com https://partner.googleadservices.com https://www.googletagservices.com https://adservice.google.com' : ''}`,
+  `connect-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ''}${adsEnabled ? ' https://pagead2.googlesyndication.com' : ''}`,
+  adsEnabled
+    ? "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com"
+    : "frame-src 'none'",
 ];
 
 const securityHeaders = [
@@ -41,6 +56,8 @@ const securityHeaders = [
   },
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
   { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+  { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
+  { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
 ];
 
 const nextConfig = {

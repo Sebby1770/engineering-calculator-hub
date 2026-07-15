@@ -1,6 +1,6 @@
 'use client';
 
-import { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes, useId } from 'react';
 
 interface CalcInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   label: string;
@@ -18,14 +18,18 @@ export default function CalcInput({
   highlight = false,
   ...rest
 }: CalcInputProps) {
+  const generatedId = useId();
+  const inputId = rest.id || generatedId;
+
   return (
     <div className="group">
-      <label className="block text-sm font-medium text-surface-600 dark:text-surface-400 mb-1.5">
+      <label htmlFor={inputId} className="block text-sm font-medium text-surface-600 dark:text-surface-400 mb-1.5">
         {label}
       </label>
       <div className="relative">
         <input
           type="number"
+          id={inputId}
           inputMode="decimal"
           value={value}
           onChange={(e) => onChange(e.target.value)}

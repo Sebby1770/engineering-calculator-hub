@@ -15,7 +15,7 @@ interface ProfileRow {
 // Opens the Stripe Billing Portal so subscribers can manage or cancel their
 // plan themselves. Requires the Billing Portal to be enabled in Stripe.
 export async function POST(request: Request) {
-  if (!isAllowedOrigin(request.headers.get('origin'))) {
+  if (!isAllowedOrigin(request)) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
@@ -38,6 +38,9 @@ export async function POST(request: Request) {
   }
 
   const profiles = await selectRows<ProfileRow>('profiles', { id: user.id }, 'stripe_customer_id');
+  if (profiles === null) {
+    return NextResponse.json({ error: 'Billing data is temporarily unavailable.' }, { status: 503 });
+  }
   const customerId = profiles?.[0]?.stripe_customer_id;
   if (!customerId) {
     return NextResponse.json({ error: 'No billing history for this account yet.' }, { status: 400 });

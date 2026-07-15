@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { getSiteUrl } from '@/lib/site';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
-import { isAllowedOrigin, isLocalOrigin } from '@/lib/requestGuards';
+import { getPublicOrigin, isAllowedOrigin } from '@/lib/requestGuards';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,17 +11,9 @@ function getStripeClient() {
   return secretKey ? new Stripe(secretKey) : null;
 }
 
-function getCheckoutOrigin(request: Request) {
-  const origin = request.headers.get('origin');
-  if (origin && isLocalOrigin(origin)) {
-    return origin.replace(/\/+$/, '');
-  }
-  return getSiteUrl();
-}
-
 export async function POST(request: Request) {
   // 1. Reject cross-site requests (CSRF protection).
-  if (!isAllowedOrigin(request.headers.get('origin'))) {
+  if (!isAllowedOrigin(request)) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
@@ -46,7 +37,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const origin = getCheckoutOrigin(request);
+    const origin = getPublicOrigin(request);
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       submit_type: 'donate',

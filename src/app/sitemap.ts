@@ -10,11 +10,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  const staticPages = ['/about', '/privacy', '/terms', '/feedback'].map((path) => ({
+  const staticPages = [
+    { path: '/workspace', priority: 0.9 },
+    { path: '/pricing', priority: 0.7 },
+    { path: '/about', priority: 0.4 },
+    { path: '/privacy', priority: 0.3 },
+    { path: '/terms', priority: 0.3 },
+    { path: '/feedback', priority: 0.4 },
+  ].map(({ path, priority }) => ({
     url: absoluteUrl(path),
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
-    priority: 0.4,
+    priority,
   }));
 
   return [

@@ -2,6 +2,25 @@
 
 All notable changes to Engineering Calculator Hub are documented in this file.
 
+## [2.0.0] - 2026-07-15
+
+### Added
+- **Engineering Workspace** with named projects, saved calculation snapshots, notes, CSV/JSON export, and print-to-PDF calculation sheets.
+- **Pro cloud workspace architecture** with authenticated server-side sync, payload validation, rate limiting, exact-price entitlement verification, and RLS-enabled Supabase migrations.
+- Versioned commercial backend tables for profiles, workspace documents, payment records, and feedback, with forced RLS, revoked browser grants, constraints, indexes, and auth-profile lifecycle automation.
+- GitHub Actions verification for tests, lint, type checking, production builds, and high-severity dependency audits.
+- Seven professional electrical and signal tools: LED Resistor Designer, PCB Trace Drop, Series RLC Resonance, Three-Phase Power, Battery Runtime, ADC Resolution, and RC Low-Pass Designer.
+- A calculation verification suite covering the new formulas, E24 divider synthesis, tolerance analysis, and workspace document validation.
+- Dedicated Pricing page and a product-specific Open Graph launch card.
+
+### Changed
+- Voltage Divider upgraded into a loaded, tolerance-aware E24 design workflow with worst-case corners, output impedance, current, and dissipation.
+- Homepage repositioned around transparent engineering workflow rather than raw calculator count.
+- Header and footer now make Workspace and Pricing first-class product destinations.
+- Pro value moved from paywalling commodity formulas to cloud projects and workflow features.
+- Removed unverified aggregate-rating structured data from calculator pages.
+- Hardened CSP, exact-origin checks, streamed request-size limits, subscription-bound event ordering, webhook failure handling, server-only module boundaries, legal disclosures, and the production security runbook.
+
 ## [1.2.0] - 2026-07-06
 
 ### Added

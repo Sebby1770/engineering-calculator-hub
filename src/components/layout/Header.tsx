@@ -6,7 +6,6 @@ import { useTheme } from './ThemeProvider';
 import { categories } from '@/data/categories';
 import { calculators } from '@/data/calculators';
 import CategoryIcon from '@/components/ui/CategoryIcon';
-import SupportCheckoutButton from '@/components/billing/SupportCheckoutButton';
 
 // Calculators grouped by category, for the dropdown + mobile menu.
 const calculatorsByCategory = categories
@@ -90,9 +89,9 @@ export default function Header() {
                 <div
                   role="menu"
                   aria-label="All calculators"
-                  className="absolute left-0 top-full w-[42rem] max-w-[calc(100vw-2rem)] rounded-lg border border-surface-200 bg-white p-5 shadow-xl dark:border-surface-800 dark:bg-surface-900"
+                  className="absolute left-0 top-full max-h-[72vh] w-[56rem] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-surface-200 bg-white p-5 shadow-2xl dark:border-surface-800 dark:bg-surface-900"
                 >
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-5">
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-5 xl:grid-cols-3">
                     {calculatorsByCategory.map(({ category, items }) => (
                       <div key={category.id}>
                         <div className="mb-2 flex items-center gap-2 text-surface-500 dark:text-surface-400">
@@ -123,16 +122,16 @@ export default function Header() {
             </div>
 
             <Link
-              href="/about"
+              href="/workspace"
               className="px-3 py-2 text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
             >
-              About
+              Workspace
             </Link>
             <Link
-              href="/feedback"
+              href="/pricing"
               className="px-3 py-2 text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
             >
-              Feedback
+              Pricing
             </Link>
           </nav>
 
@@ -144,9 +143,9 @@ export default function Header() {
             >
               Account
             </Link>
-            <div className="hidden sm:block">
-              <SupportCheckoutButton compact />
-            </div>
+            <Link href="/pricing" className="hidden rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm shadow-brand-500/20 transition hover:bg-brand-700 sm:inline-flex">
+              Go Pro
+            </Link>
 
             {/* Theme toggle */}
             <button
@@ -204,6 +203,8 @@ export default function Header() {
             ))}
             <div className="border-t border-surface-200 pt-3 dark:border-surface-800">
               {[
+                ['/workspace', 'Engineering Workspace'],
+                ['/pricing', 'Pricing'],
                 ['/about', 'About'],
                 ['/feedback', 'Feedback'],
                 ['/account', 'Account'],
@@ -217,9 +218,6 @@ export default function Header() {
                   {label}
                 </Link>
               ))}
-            </div>
-            <div className="px-3 pt-3">
-              <SupportCheckoutButton />
             </div>
           </nav>
         )}

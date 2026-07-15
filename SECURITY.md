@@ -1,113 +1,145 @@
-# Security Checklist & Posture
+# Security posture and launch runbook
 
-This document records how the **Engineering Calculator Hub** addresses the 50-point
-security checklist. The app is a **Next.js (App Router) calculator site** with optional
-SaaS features: **Supabase Auth** (passwordless magic links), a **Stripe Pro
-subscription** (Checkout + Billing Portal + webhook sync), and a **locked-down Supabase
-Postgres database** (donation log, feedback, per-user profiles). Server code is limited
-to seven API routes: checkout, subscribe, portal, subscription-status, webhook, feedback,
-and health. Items that don't apply are marked **N/A** with the reason, rather than left
-ambiguous.
+Engineering Calculator Hub is a Next.js application with local-first calculators and optional
+Supabase Auth, Supabase Postgres, Stripe billing, and Pro cloud workspace sync. This document
+describes the controls that exist in code and the operational controls required before accepting
+real customer data or money.
 
-Reporting: see [/.well-known/security.txt](public/.well-known/security.txt) — report
-vulnerabilities via [GitHub security advisories](https://github.com/Sebby1770/engineering-calculator-hub/security/advisories/new).
+Report vulnerabilities privately through [GitHub Security Advisories](https://github.com/Sebby1770/engineering-calculator-hub/security/advisories/new).
+Do not put credentials, customer data, or an unpatched vulnerability in a public issue.
 
-Legend: ✅ implemented/verified · ➖ not applicable · 📋 ops/process recommendation
+Last reviewed: 2026-07-15
 
-Last reviewed: 2026-06-10
+## Security boundaries
 
----
+- Calculator inputs run locally. They reach the backend only if a user deliberately saves a
+  result to Pro cloud sync.
+- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are publishable browser
+  configuration, not secrets. Database security never depends on hiding them.
+- `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET` are server-only.
+  They must live in Vercel encrypted environment variables or an ignored `.env.local` file and
+  must never use a `NEXT_PUBLIC_` prefix.
+- Server database modules import `server-only`, and the service-role REST helper accepts only the
+  four explicitly listed application tables.
+- Card details are entered on Stripe-hosted pages and never pass through this application.
 
-## 1. Fixed / hardened in code
+## Implemented controls
 
-| # | Item | What was done |
-|---|------|---------------|
-| 46 | Missing security headers | Full header set in `next.config.js` `headers()`: **Content-Security-Policy**, **Strict-Transport-Security** (HSTS, 2y + preload), **X-Frame-Options: DENY**, **X-Content-Type-Options: nosniff**, **Referrer-Policy**, **Permissions-Policy**, **Cross-Origin-Opener-Policy**, **X-DNS-Prefetch-Control**, plus **X-Robots-Tag: noindex** on `/api/*`. Verified live with `curl -I`. |
-| 19 | Cross-site scripting (XSS) | React escapes all rendered values by default. The only `dangerouslySetInnerHTML` is static JSON-LD serialized through `toJsonLd()` which escapes `<` (`src/app/[slug]/page.tsx`). CSP adds a second layer. |
-| 28 | Rate limits missing on APIs | `src/lib/rateLimit.ts` (in-memory fixed-window) applied to `POST /api/checkout` (**5/min/IP**) and `POST /api/feedback` (**3/min/IP**) → **429** with `Retry-After`. |
-| 20 | CSRF | Shared origin guard (`src/lib/requestGuards.ts`) rejects foreign-`Origin` POSTs (**403**) on checkout and feedback. These endpoints use no cookies/auth, so this is defense in depth. |
-| 16 | Missing input validation | Feedback endpoint validates message length (10–2000), optional email format/length, and silently drops honeypot submissions; DB constraints re-enforce the same limits. Universal calculator caps expression length. API routes never trust client-supplied prices/amounts. |
-| 32 | Payment checks only on frontend | Checkout sessions are created **server-side** with a server-configured price. The success page now **retrieves the session from Stripe server-side** and only shows "confirmed" when `payment_status === 'paid'` — visiting the URL proves nothing. |
-| 31 | Webhook without signature verification | `POST /api/stripe/webhook` verifies via `stripe.webhooks.constructEvent(...)`; donation inserts are **idempotent** (unique `stripe_session_id`, duplicate deliveries ignored), and a failed insert returns 500 so Stripe retries. |
-| 39 (analogue) | Expression / function injection | `mathjs` hardened in `UniversalCalculator.tsx`: `import`/`createUnit` disabled. (Runs client-side only.) |
-| 36 | Source maps exposed in production | `productionBrowserSourceMaps: false` in `next.config.js`. |
-| 12 | Verbose errors leaking stack traces | API routes return generic messages; real errors go to `console.error` server-side only. |
+### Browser and transport
 
-## 2. Database (Supabase) — how it's secured
+- Content Security Policy limits code, frames, forms, images, and connections. Supabase Auth is
+  allowed only to the configured project origin, and advertising domains are absent unless ads
+  are explicitly enabled.
+- HSTS, clickjacking protection, MIME sniffing protection, strict referrers, restricted browser
+  permissions, COOP/CORP, and disabled production browser source maps are configured in
+  `next.config.js`.
+- API responses are marked `noindex`, and the app emits no permissive CORS headers.
+- React escapes user-visible content. Static JSON-LD is serialized with `<` escaped.
 
-The database was added deliberately small and locked down (project `engineering-calculator-hub`, Postgres 17):
+### APIs and authentication
 
-| # | Item | Status |
-|---|------|--------|
-| 1 | Exposed database credentials | ✅ Only the **service-role key** is used, read from server-only env vars (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — never `NEXT_PUBLIC_*`). No Supabase keys ship to the browser at all. |
-| 7 | Open database read/write permissions | ✅ **RLS enabled with zero policies** on both tables **and** `REVOKE ALL ... FROM anon, authenticated` — client roles can do nothing, even with the anon key. |
-| 8 | Misconfigured Firebase/Supabase/S3 | ✅ See above; no storage buckets, no client SDK, no realtime. All access is server-side REST with the service role. |
-| 17 | SQL injection | ✅ No SQL is ever built from user input — inserts go through PostgREST as JSON; lengths/format enforced by `CHECK` constraints. |
-| 41 | Excessive DB permissions for app user | ✅/📋 The serverless routes use the service role (full access) but touch only three tables (`donations`, `feedback`, `profiles`) through narrow helpers. For stricter least-privilege, a dedicated Postgres role with table-scoped grants could replace it later. |
-| 42 | No audit logs | ✅ (lightweight) The `donations` table is an append-only record of every completed checkout, independent of Stripe's dashboard. |
-| 44 | No backup/restore plan | 📋 Data is low-criticality (feedback + donation log; Stripe holds the authoritative payment records). Supabase free tier has no scheduled backups — upgrade to Pro or export periodically if this data becomes important. |
-| 48 | Unencrypted sensitive data | ✅ Supabase encrypts at rest; transport is TLS; the only personal field stored is an optional feedback email. |
+- Every authenticated route validates the bearer token against Supabase Auth; client-decoded JWT
+  claims are never trusted on their own.
+- State-changing routes reject foreign origins. The guard accepts only localhost, the canonical
+  host, or the exact deployment host, so previews work without trusting arbitrary Vercel domains.
+- Feedback, billing, subscription status, checkout, and workspace routes have per-IP soft limits.
+  Feedback and workspace uploads also enforce byte limits and schema/length validation.
+- Prices and Stripe customer IDs come from server configuration or verified account records, not
+  request bodies.
+- Pro authorization requires both an active/trialing Stripe status and the exact configured Pro
+  price ID.
 
-## 3. Already in place (verified)
+### Stripe
 
-| # | Item | Evidence |
-|---|------|----------|
-| 2 | Public `.env` files | `.gitignore` ignores `.env` and `.env*.local`; only `.env.example` (blank placeholders) is committed. |
-| 3 / 14 | Hardcoded API keys / secrets in frontend | No secrets in source. Only `NEXT_PUBLIC_*` (non-secret config) reaches the client. Stripe + Supabase secrets are server-only `process.env` reads. |
-| 22 | Path traversal | The dynamic `[slug]` route resolves against a fixed whitelist and 404s otherwise. No filesystem path is built from user input. |
-| 27 | Overly permissive CORS | API routes set **no** `Access-Control-Allow-Origin`, so they are same-origin only. |
-| 35 | Logs containing secrets/PII | Logs contain only Stripe session ids, HTTP statuses, and generic error text. |
-| 10 | Debug pages in production | None exist. `/api/health` returns only `{status, service}`. |
-| 37 / 38 | Dependency vulnerabilities / outdated packages | `npm audit` → **0 vulnerabilities**, now enforced in CI (`--audit-level=high`) plus weekly **Dependabot** update PRs. |
+- Checkout and Billing Portal sessions are created server-side.
+- Stripe webhook signatures are verified against the unmodified request body.
+- Webhooks fail closed when persistence or subscription verification is unavailable, allowing
+  Stripe to retry instead of silently losing an entitlement.
+- Completed subscriptions are retrieved from Stripe before access is recorded. An unexpected
+  price never grants Pro.
+- Entitlements are bound to the exact Stripe subscription ID, and newer event timestamps prevent
+  a delayed update from overwriting a later cancellation.
+- One-off payment events are idempotent through a unique Stripe Checkout session ID.
+- Existing active subscribers cannot accidentally create a second Pro subscription from the app.
 
-## 4. Not applicable to this app (with reason)
+### Supabase/Postgres
 
-| # | Item | Why N/A / how handled |
-|---|------|---------|
-| 4 | Weak/missing authentication | ✅ Handled by **Supabase Auth** with passwordless magic links — no passwords exist to be weak. API routes verify the bearer token server-side against Supabase on every request (`src/lib/supabaseAuth.ts`). |
-| 5 | No authorization checks | ✅ The only per-user resource (`profiles`) is readable solely by its owner (RLS `auth.uid() = id`); billing routes act only on the verified caller's own profile. |
-| 6 | Users accessing others' data | ✅ RLS own-row policy + all queries server-side filtered by the verified user id. |
-| 9 | Admin routes unprotected | No admin area (data is viewed in the Supabase dashboard, behind Supabase auth). |
-| 18 | NoSQL injection | No NoSQL store. |
-| 21 | Insecure file uploads | No upload functionality. |
-| 23 | SSRF | The server never fetches user-supplied URLs (Supabase/Stripe URLs are fixed config). |
-| 24 | Broken password reset | ➖ No passwords at all — sign-in is a one-time emailed link (Supabase-managed). |
-| 25 | Weak session management | ✅ Sessions are Supabase-issued JWTs, validated server-side per request; this app still sets no cookies of its own. |
-| 26 | Weak/leaked/reused JWT secrets | JWTs are issued and signed by Supabase (managed); this app never signs tokens. |
-| 15 | Client-side-only security checks | ✅/📋 Pro gating asks the server (`/api/me/subscription`) — the client never decides entitlement itself. Caveat documented: calculators execute client-side, so gating is a product boundary; keep genuinely secret logic in API routes. |
-| 30 | Default credentials | No credentials to set. |
-| 33 | IDOR | No object IDs are accepted from clients (the success page accepts a Stripe session ID but only displays what Stripe returns for it). |
-| 40 | AI tools accessing data without checks | No AI features. |
-| 47 | Cookies missing HttpOnly/Secure/SameSite | The app sets no cookies. |
-| 49 | Poor tenant isolation | Single-tenant; no per-user data model. |
+The migrations in `supabase/migrations/` version all commercial tables:
 
-## 5. Ops / process
+- `profiles` — server-managed account and Stripe entitlement state
+- `workspace_documents` — one validated cloud document per Pro user
+- `donations` — idempotent one-off Stripe payment records
+- `feedback` — validated product feedback and optional reply address
 
-| # | Item | Status |
-|---|------|--------|
-| 11 | Build logs leaking secrets | 📋 Secrets live in Vercel Environment Variables; no secrets are echoed in scripts. |
-| 13 | Leaked repos / commit history | ✅ History scanned — only `.env.example` appears, no real secrets. Repo is public by choice (MIT). |
-| 29 | Public test/staging environments | 📋 Vercel Preview deployments are public by default; consider Deployment Protection for previews. |
-| 43 | No monitoring/alerting | ✅/📋 **GitHub Actions CI** now runs lint, typecheck, build, and `npm audit` on every push/PR. For runtime alerting, enable Vercel log drains/alerts; `/api/health` is available for uptime checks. |
-| 45 | Publicly exposed internal dashboards | ➖ None exist (Supabase dashboard is behind Supabase login). |
-| 50 | Over-trusting generated code | 📋 CI gate + this document; re-read diffs before each deploy. |
+All four tables have RLS enabled and forced, with client grants revoked and no browser policies.
+Only the server-side service role receives explicit table privileges. Constraints cover supported
+subscription states, text lengths, currency shape, and non-negative payment amounts. Frequently
+filtered and retention/audit columns are indexed. A locked `SECURITY DEFINER` trigger creates the
+private profile row when Supabase Auth creates a user.
 
-## 6. Notes & future hardening
+## CI and dependency safety
 
-- **CSP `'unsafe-inline'`**: Next.js emits inline bootstrap scripts and the calculator pages
-  render inline JSON-LD. A nonce-based CSP requires per-request dynamic rendering, which would
-  give up static generation of every calculator page — a poor trade for this site. Revisit if
-  the threat model changes. AdSense domains are pre-allowed only so ads work if
-  `NEXT_PUBLIC_AD_ENABLED=true` is ever set; remove them if you never enable ads.
-- **Rate limiting** is in-memory and therefore per-instance on serverless. For a hard global
-  limit, back `rateLimit()` with Upstash Redis or Vercel KV.
-- **Least-privilege DB role**: the service role is acceptable at this scale; a dedicated
-  INSERT-only Postgres role would be the next step if the schema grows.
+- Pull requests and pushes to `main` run tests, lint, type checking, a production build, and
+  `npm audit --audit-level=high` in GitHub Actions.
+- Dependabot checks npm and GitHub Actions weekly.
+- The repository ignores local environment files, build output, Vercel link metadata, and local
+  database CLI state. Review staged files before every commit anyway.
+- Enable GitHub secret scanning and push protection in repository settings.
 
-## Verifying
+## Required Vercel production controls
+
+The in-code limiter is deliberately described as a soft limit because serverless instances do not
+share memory. Before a public launch:
+
+1. Enable Vercel Bot Protection in log/challenge mode and review false positives.
+2. Use the Hobby plan's rate-limit rule (or a stricter Pro-plan set) for application APIs, excluding
+   `/api/stripe/webhook` so legitimate Stripe retries are not dropped. A sensible first rule is
+   100 requests per minute per IP for `/api/*`, then tune from Security Events.
+3. Keep automatic DDoS protection enabled and use Attack Challenge Mode only during an incident.
+4. Protect preview deployments and never attach production Supabase/Stripe secrets to untrusted
+   preview branches.
+5. Enable Vercel runtime alerts and review 4xx/5xx, billing, auth, and webhook errors.
+
+Do not add a blanket API-key WAF rule: browser-facing APIs use Supabase bearer tokens or
+same-origin controls, and Stripe must reach the webhook without a custom header.
+
+## Secret and environment checklist
+
+- Scope test keys to Preview/Development and live keys to Production.
+- Mark service-role and Stripe keys sensitive in Vercel.
+- Rotate a key immediately if it appears in source, logs, screenshots, support messages, or an
+  unexpected environment. Redeploy after rotation and revoke the old value.
+- Keep separate Stripe webhook signing secrets for test and live endpoints.
+- Verify the Supabase Auth Site URL and redirect allow-list; do not use wildcard redirects in
+  production.
+- Treat a copied publishable Supabase key as expected. RLS and grants—not obscurity—protect data.
+
+## Backup, privacy, and incident response
+
+- Free local workspace data is the user's responsibility; JSON/CSV/PDF-ready exports are provided.
+- Upgrade Supabase before launch if scheduled backups and point-in-time recovery are required.
+  Test a restore, not just a backup setting.
+- Stripe remains authoritative for payments. Reconcile Stripe subscriptions against `profiles`
+  periodically and after any webhook incident.
+- For a suspected breach: preserve logs, restrict the affected path, rotate relevant secrets,
+  reconcile Stripe/Supabase records, notify affected people and regulators where required, and
+  document the timeline and corrective action.
+- Privacy and Terms pages are product safeguards, not legal advice. Have an Australian lawyer
+  review them, the refund flow, business identity/contact details, tax obligations, and Australian
+  Consumer Law disclosures before a paid launch.
+
+## Verification
 
 ```bash
-npm run check          # lint + typecheck + production build
-npm audit              # dependency vulnerabilities
-npm run start          # then: curl -I http://localhost:3000  (inspect headers)
+npm run verify
+npm audit --audit-level=high
+npm run start
+curl -I http://localhost:3000
 ```
+
+Also test: sign-in redirect, upgrade, duplicate upgrade prevention, webhook retry, cancellation,
+portal return, cloud save/load, cross-account isolation, oversized payload rejection, a foreign
+Origin request, data export, and an account/data deletion request.
+
+No checklist can guarantee that a service will never be compromised or sued. The objective is to
+reduce likelihood and impact, keep claims honest, and make failures observable and recoverable.
