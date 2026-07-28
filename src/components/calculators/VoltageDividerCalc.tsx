@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CalcInput from '@/components/ui/CalcInput';
 import WorkSteps from '@/components/ui/WorkSteps';
 import {
@@ -9,6 +9,7 @@ import {
   formatEngineering,
   type VoltageDividerAnalysis,
 } from '@/lib/engineeringCalculations';
+import type { CalculatorCapture, CalculationStep } from '@/lib/workspace';
 
 type Mode = 'analyse' | 'design';
 
@@ -19,7 +20,7 @@ interface DividerResult {
   designed: boolean;
 }
 
-export default function VoltageDividerCalc({ onResult }: { onResult: (result: string) => void }) {
+export default function VoltageDividerCalc({ onResult }: { onResult: (result: string | CalculatorCapture) => void }) {
   const [mode, setMode] = useState<Mode>('design');
   const [inputVoltage, setInputVoltage] = useState('12');
   const [targetVoltage, setTargetVoltage] = useState('3.3');
@@ -32,6 +33,28 @@ export default function VoltageDividerCalc({ onResult }: { onResult: (result: st
   const [supplyTolerance, setSupplyTolerance] = useState('5');
   const [result, setResult] = useState<DividerResult | null>(null);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const queryMode = params.get('mode');
+    if (queryMode === 'design' || queryMode === 'analyse') setMode(queryMode);
+    const setters: Record<string, (value: string) => void> = {
+      inputVoltage: setInputVoltage,
+      targetVoltage: setTargetVoltage,
+      r1Kohm: setR1Kohm,
+      r2Kohm: setR2Kohm,
+      targetCurrentMa: setTargetCurrentMa,
+      loadKohm: setLoadKohm,
+      resistorTolerance: setResistorTolerance,
+      supplyTolerance: setSupplyTolerance,
+    };
+    for (const [key, setter] of Object.entries(setters)) {
+      const value = params.get(key);
+      if (value !== null && value.length <= 100 && Number.isFinite(Number(value))) setter(value);
+    }
+    const queryLoad = params.get('loadEnabled');
+    if (queryLoad === 'yes' || queryLoad === 'no') setLoadEnabled(queryLoad === 'yes');
+  }, []);
 
   const calculate = () => {
     const shared = {
@@ -64,7 +87,44 @@ export default function VoltageDividerCalc({ onResult }: { onResult: (result: st
       setResult(next);
       setError('');
       const summary = `R1 = ${formatEngineering(next.r1Ohm)} Ω, R2 = ${formatEngineering(next.r2Ohm)} Ω; loaded Vout = ${formatEngineering(next.analysis.loadedVoltage)} V; worst-case range = ${formatEngineering(next.analysis.worstCaseLow)}–${formatEngineering(next.analysis.worstCaseHigh)} V.`;
-      onResult(summary);
+      const steps: CalculationStep[] = [
+        { label: 'Nominal unloaded output', value: `Vin × R2/(R1+R2) = ${formatEngineering(next.analysis.unloadedVoltage)} V` },
+        { label: 'Load-adjusted output', value: `${formatEngineering(next.analysis.loadedVoltage)} V (${formatEngineering(next.analysis.loadingErrorPercent)}% loading shift)` },
+        { label: 'Worst-case tolerance range', value: `${formatEngineering(next.analysis.worstCaseLow)} V to ${formatEngineering(next.analysis.worstCaseHigh)} V` },
+        { label: 'Resistor dissipation', value: `R1: ${formatEngineering(next.analysis.r1Power)} W; R2: ${formatEngineering(next.analysis.r2Power)} W` },
+      ];
+      const capturedInputs = [
+        { id: 'inputVoltage', label: 'Input voltage', value: inputVoltage, unit: 'V' },
+        ...(mode === 'design'
+          ? [
+              { id: 'targetVoltage', label: 'Target output', value: targetVoltage, unit: 'V' },
+              { id: 'targetCurrentMa', label: 'Preferred source current', value: targetCurrentMa, unit: 'mA' },
+            ]
+          : [
+              { id: 'r1Kohm', label: 'Resistor R1', value: r1Kohm, unit: 'kΩ' },
+              { id: 'r2Kohm', label: 'Resistor R2', value: r2Kohm, unit: 'kΩ' },
+            ]),
+        { id: 'resistorTolerance', label: 'Resistor tolerance', value: resistorTolerance, unit: '%' },
+        { id: 'supplyTolerance', label: 'Supply tolerance', value: supplyTolerance, unit: '%' },
+        { id: 'loadEnabled', label: 'Include fixed load', value: loadEnabled ? 'yes' : 'no' },
+        ...(loadEnabled ? [{ id: 'loadKohm', label: 'Load resistance', value: loadKohm, unit: 'kΩ' }] : []),
+      ];
+      onResult({
+        summary,
+        mode,
+        calculatorVersion: '2026-07-28',
+        inputs: capturedInputs,
+        outputs: [
+          { label: 'Selected R1', value: formatEngineering(next.r1Ohm / 1_000), unit: 'kΩ' },
+          { label: 'Selected R2', value: formatEngineering(next.r2Ohm / 1_000), unit: 'kΩ' },
+          { label: 'Loaded output', value: formatEngineering(next.analysis.loadedVoltage), unit: 'V' },
+          { label: 'Worst-case low', value: formatEngineering(next.analysis.worstCaseLow), unit: 'V' },
+          { label: 'Worst-case high', value: formatEngineering(next.analysis.worstCaseHigh), unit: 'V' },
+          { label: 'Source current', value: formatEngineering(next.analysis.sourceCurrent * 1_000), unit: 'mA' },
+        ],
+        steps,
+        warning: 'This model treats the load as fixed and the source as ideal. For an ADC input, include sampling transients, leakage, source-impedance limits, reference tolerance, and settling time from the datasheet.',
+      });
     } catch (caught) {
       setResult(null);
       setError(caught instanceof Error ? caught.message : 'Check the divider inputs and try again.');

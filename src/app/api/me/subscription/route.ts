@@ -11,6 +11,8 @@ interface ProfileRow {
   price_id: string | null;
   current_period_end: string | null;
   stripe_customer_id: string | null;
+  cancel_at_period_end: boolean;
+  canceled_at: string | null;
 }
 
 const ACTIVE_STATUSES = new Set(['active', 'trialing']);
@@ -38,7 +40,7 @@ export async function GET(request: Request) {
   const profiles = await selectRows<ProfileRow>(
     'profiles',
     { id: user.id },
-    'subscription_status,price_id,current_period_end,stripe_customer_id'
+    'subscription_status,price_id,current_period_end,stripe_customer_id,cancel_at_period_end,canceled_at'
   );
   if (profiles === null) {
     return NextResponse.json({ error: 'Subscription data is temporarily unavailable.' }, { status: 503 });
@@ -55,6 +57,8 @@ export async function GET(request: Request) {
     status,
     priceId: profile?.price_id ?? null,
     currentPeriodEnd: profile?.current_period_end ?? null,
+    cancelAtPeriodEnd: profile?.cancel_at_period_end === true,
+    canceledAt: profile?.canceled_at ?? null,
     hasBilling: Boolean(profile?.stripe_customer_id),
   });
 }

@@ -1,17 +1,19 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import CalcInput from '@/components/ui/CalcInput';
+import CalcSelect from '@/components/ui/CalcSelect';
 import WorkSteps from '@/components/ui/WorkSteps';
 import type { EngineeringResult } from '@/lib/engineeringCalculations';
 import type { EngineeringToolDefinition } from '@/data/professionalCalculators';
+import type { CalculatorCapture } from '@/lib/workspace';
 
 export default function EngineeringFormulaTool({
   definition,
   onResult,
 }: {
   definition: EngineeringToolDefinition;
-  onResult: (result: string) => void;
+  onResult: (result: string | CalculatorCapture) => void;
 }) {
   const initialValues = useMemo(
     () => Object.fromEntries(definition.fields.map((field) => [field.id, String(field.defaultValue)])),
@@ -21,6 +23,20 @@ export default function EngineeringFormulaTool({
   const [calculation, setCalculation] = useState<EngineeringResult | null>(null);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setValues((current) => {
+      const next = { ...current };
+      for (const field of definition.fields) {
+        const queryValue = params.get(field.id);
+        if (queryValue === null || queryValue.length > 100 || !Number.isFinite(Number(queryValue))) continue;
+        if (field.options && !field.options.some((option) => String(option.value) === queryValue)) continue;
+        next[field.id] = queryValue;
+      }
+      return next;
+    });
+  }, [definition]);
+
   const calculate = () => {
     const numericValues = Object.fromEntries(
       definition.fields.map((field) => [field.id, Number(values[field.id])]),
@@ -29,7 +45,28 @@ export default function EngineeringFormulaTool({
       const next = definition.calculate(numericValues);
       setCalculation(next);
       setError('');
-      onResult(next.summary);
+      onResult({
+        summary: next.summary,
+        calculatorVersion: '2026-07-28',
+        inputs: definition.fields.map((field) => {
+          const rawValue = values[field.id] ?? '';
+          const selectedLabel = field.options?.find((option) => String(option.value) === rawValue)?.label;
+          return {
+            id: field.id,
+            label: field.label,
+            value: selectedLabel || rawValue,
+            reopenValue: selectedLabel ? rawValue : undefined,
+            unit: field.unit,
+          };
+        }),
+        outputs: next.outputs.map((output) => ({
+          label: output.label,
+          value: String(output.value),
+          unit: output.unit,
+        })),
+        steps: next.steps.map((step) => ({ label: step.label, value: step.value })),
+        warning: next.warning,
+      });
     } catch (caught) {
       setCalculation(null);
       setError(caught instanceof Error ? caught.message : 'Check the inputs and try again.');
@@ -49,15 +86,27 @@ export default function EngineeringFormulaTool({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {definition.fields.map((field) => (
           <div key={field.id}>
-            <CalcInput
-              label={field.label}
-              unit={field.unit}
-              value={values[field.id] ?? ''}
-              onChange={(value) => setValues((current) => ({ ...current, [field.id]: value }))}
-              min={field.min}
-              max={field.max}
-              step={field.step ?? 'any'}
-            />
+            {field.options ? (
+              <CalcSelect
+                label={field.label}
+                value={values[field.id] ?? ''}
+                onChange={(value) => setValues((current) => ({ ...current, [field.id]: value }))}
+                options={field.options.map((option) => ({
+                  value: String(option.value),
+                  label: option.label,
+                }))}
+              />
+            ) : (
+              <CalcInput
+                label={field.label}
+                unit={field.unit}
+                value={values[field.id] ?? ''}
+                onChange={(value) => setValues((current) => ({ ...current, [field.id]: value }))}
+                min={field.min}
+                max={field.max}
+                step={field.step ?? 'any'}
+              />
+            )}
             {field.help && <p className="mt-1.5 text-xs leading-relaxed text-surface-400">{field.help}</p>}
           </div>
         ))}

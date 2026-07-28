@@ -309,7 +309,7 @@ export default function HomePage() {
               {[
                 {
                   eyebrow: 'Calculate',
-                  title: '41 free, deterministic tools',
+                  title: `${calculators.length} free, deterministic tools`,
                   copy: 'From fundamentals to PCB loss, ADC resolution, filters, battery runtime, and three-phase power.',
                   href: '#calculators',
                   action: 'Browse tools',

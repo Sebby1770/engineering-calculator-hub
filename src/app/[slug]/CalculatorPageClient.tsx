@@ -42,10 +42,11 @@ import EigenvalueCalc from "@/components/calculators/EigenvalueCalc";
 import EquationSolverCalc from "@/components/calculators/EquationSolverCalc";
 import EngineeringFormulaTool from "@/components/calculators/EngineeringFormulaTool";
 import { getEngineeringToolBySlug } from "@/data/professionalCalculators";
+import type { CalculatorCapture } from "@/lib/workspace";
 
 const CALCULATOR_MAP: Record<
   string,
-  React.ComponentType<{ onResult: (r: string) => void }>
+  React.ComponentType<{ onResult: (r: string | CalculatorCapture) => void }>
 > = {
   "ohms-law-calculator": OhmsLawCalc,
   "voltage-divider-calculator": VoltageDividerCalc,
@@ -84,18 +85,28 @@ const CALCULATOR_MAP: Record<
 };
 
 export default function CalculatorPageClient({ slug }: { slug: string }) {
-  const [result, setResult] = useState("");
+  const [calculation, setCalculation] = useState<CalculatorCapture | null>(null);
   const config = getCalculatorBySlug(slug);
   if (!config) return null;
+
+  const handleResult = (result: string | CalculatorCapture) => {
+    setCalculation(
+      typeof result === 'string'
+        ? result
+          ? { summary: result }
+          : null
+        : result,
+    );
+  };
 
   const CalcComponent = CALCULATOR_MAP[slug];
   const engineeringTool = getEngineeringToolBySlug(slug);
   if (!CalcComponent && !engineeringTool) return null;
 
   const calculatorContent = engineeringTool ? (
-    <EngineeringFormulaTool definition={engineeringTool} onResult={setResult} />
+    <EngineeringFormulaTool definition={engineeringTool} onResult={handleResult} />
   ) : CalcComponent ? (
-    <CalcComponent onResult={setResult} />
+    <CalcComponent onResult={handleResult} />
   ) : null;
 
   const calculator = config.meta.pro ? (
@@ -107,7 +118,7 @@ export default function CalculatorPageClient({ slug }: { slug: string }) {
   );
 
   return (
-    <CalculatorLayout config={config} result={result}>
+    <CalculatorLayout config={config} result={calculation?.summary} evidence={calculation || undefined}>
       {calculator}
     </CalculatorLayout>
   );

@@ -1,11 +1,8 @@
 import { create, all } from "mathjs";
 import { numericalLimit, simpsonIntegral } from "@/lib/mathUtils";
+import { solveQuadraticEquation } from "@/lib/quadratic";
 
 const math = create(all);
-
-type SolvableMath = {
-  solve: (equation: unknown, variable: string) => unknown;
-};
 
 type IntegrableNode = {
   integrate: (variable: string) => { toString: () => string; evaluate: (scope: Record<string, number>) => number };
@@ -35,6 +32,21 @@ function normalizeEquation(expression: string): string {
   return expression.replace(/\s+/g, " ").trim();
 }
 
+function formatPolynomial(a: number, b: number, c: number, variable: string): string {
+  const leadingMagnitude = Math.abs(a) === 1 ? "" : formatValue(Math.abs(a));
+  let formatted = `${a < 0 ? "−" : ""}${leadingMagnitude}${variable}²`;
+
+  if (b !== 0) {
+    const linearMagnitude = Math.abs(b) === 1 ? "" : formatValue(Math.abs(b));
+    formatted += ` ${b < 0 ? "−" : "+"} ${linearMagnitude}${variable}`;
+  }
+  if (c !== 0) {
+    formatted += ` ${c < 0 ? "−" : "+"} ${formatValue(Math.abs(c))}`;
+  }
+
+  return `${formatted} = 0`;
+}
+
 function detectKind(expression: string): string {
   const trimmed = normalizeEquation(expression);
   if (/=/.test(trimmed) && /solve\s*\(/i.test(trimmed)) return "equation";
@@ -47,57 +59,41 @@ function detectKind(expression: string): string {
   return "expression";
 }
 
-function parseQuadratic(expression: string): { a: number; b: number; c: number } | null {
-  const eq = normalizeEquation(expression).replace(/\s*=\s*0\s*$/, "");
-  const compiled = math.compile(eq);
-  const evaluateAt = (x: number) => Number(compiled.evaluate({ x }));
+export function solveQuadraticWithSteps(
+  expression: string,
+  variable = "x",
+): SmartEvaluation | null {
+  const solution = solveQuadraticEquation(expression, variable);
+  if (!solution) return null;
 
-  const f0 = evaluateAt(0);
-  const f1 = evaluateAt(1);
-  const f2 = evaluateAt(2);
-  const c = f0;
-  const a = (f2 - 2 * f1 + c) / 2;
-  const b = f1 - a - c;
-
-  if (![a, b, c].every((value) => Number.isFinite(value))) return null;
-  if (Math.abs(a) < 1e-12) return null;
-  return { a, b, c };
-}
-
-function solveQuadraticWithSteps(expression: string): SmartEvaluation | null {
-  const coeffs = parseQuadratic(expression);
-  if (!coeffs) return null;
-
-  const { a, b, c } = coeffs;
-  const discriminant = b * b - 4 * a * c;
+  const { a, b, c, discriminant, roots } = solution;
   const steps: WorkStep[] = [
-    { label: "Standard form", value: `${a}x² + ${b}x + ${c} = 0` },
+    { label: "Standard form", value: formatPolynomial(a, b, c, variable) },
     { label: "Discriminant", value: `Δ = b² − 4ac = ${discriminant.toPrecision(10)}` },
   ];
 
   if (discriminant < 0) {
-    const real = (-b / (2 * a)).toPrecision(10);
-    const imag = (Math.sqrt(-discriminant) / (2 * a)).toPrecision(10);
-    const result = `x = ${real} ± ${imag}i`;
+    const real = roots[0].real.toPrecision(10);
+    const imag = Math.abs(roots[0].imaginary).toPrecision(10);
+    const result = `${variable} = ${real} ± ${imag}i`;
     steps.push({ label: "Complex roots", value: result });
     return { result, kind: "Quadratic equation", steps };
   }
 
-  const sqrtDelta = Math.sqrt(discriminant);
-  const x1 = (-b + sqrtDelta) / (2 * a);
-  const x2 = (-b - sqrtDelta) / (2 * a);
+  const x1 = roots[0].real;
+  const x2 = roots[1].real;
   const result =
     Math.abs(x1 - x2) < 1e-10
-      ? `x = ${x1.toPrecision(10)} (repeated root)`
-      : `x₁ = ${x1.toPrecision(10)}, x₂ = ${x2.toPrecision(10)}`;
+      ? `${variable} = ${x1.toPrecision(10)} (repeated root)`
+      : `${variable}₁ = ${x1.toPrecision(10)}, ${variable}₂ = ${x2.toPrecision(10)}`;
 
   steps.push({ label: "Apply quadratic formula", value: "x = (−b ± √Δ) / 2a" });
   if (Math.abs(x1 - x2) >= 1e-10) {
     const r1 = Math.abs(x1) < 1e-10 ? 0 : x1;
     const r2 = Math.abs(x2) < 1e-10 ? 0 : x2;
-    const sign1 = r1 >= 0 ? `- ${r1}` : `+ ${Math.abs(r1)}`;
-    const sign2 = r2 >= 0 ? `- ${r2}` : `+ ${Math.abs(r2)}`;
-    steps.push({ label: "Factor form", value: `(x ${sign1})(x ${sign2}) = 0` });
+    const sign1 = r1 >= 0 ? `− ${formatValue(r1)}` : `+ ${formatValue(Math.abs(r1))}`;
+    const sign2 = r2 >= 0 ? `− ${formatValue(r2)}` : `+ ${formatValue(Math.abs(r2))}`;
+    steps.push({ label: "Factor form", value: `(${variable} ${sign1})(${variable} ${sign2}) = 0` });
   }
   steps.push({ label: "Roots", value: result });
   return { result, kind: "Quadratic equation", steps };
@@ -105,33 +101,12 @@ function solveQuadraticWithSteps(expression: string): SmartEvaluation | null {
 
 function tryEquationSolve(expression: string): SmartEvaluation | null {
   const trimmed = normalizeEquation(expression);
-  const quadratic = solveQuadraticWithSteps(trimmed);
-  if (quadratic) return quadratic;
-
   const solveMatch = trimmed.match(/^solve\s*\((.+),\s*([a-zA-Z]+)\s*\)$/i);
   const equation = solveMatch ? solveMatch[1] : trimmed.includes("=") ? trimmed : null;
   const variable = solveMatch?.[2] ?? "x";
 
   if (!equation) return null;
-
-  try {
-    const solutions = (math as unknown as SolvableMath).solve(math.parse(equation), variable);
-    const formatted = Array.isArray(solutions)
-      ? solutions.map((value, index) => `${variable}${index + 1} = ${formatValue(value)}`).join(", ")
-      : `${variable} = ${formatValue(solutions)}`;
-
-    return {
-      result: formatted,
-      kind: "Equation solver",
-      steps: [
-        { label: "Equation", value: equation },
-        { label: "Solve for", value: variable },
-        { label: "Solutions", value: formatted },
-      ],
-    };
-  } catch {
-    return null;
-  }
+  return solveQuadraticWithSteps(equation, variable);
 }
 
 function tryDerivative(expression: string): SmartEvaluation | null {
@@ -456,8 +431,7 @@ export function limitWithSteps(
   }
 
   try {
-    const derivative = math.simplify(math.derivative(expression, variable));
-    const direct = Number(derivative.evaluate({ [variable]: point }));
+    const direct = evaluate(point);
     if (Number.isFinite(direct) && Math.abs(direct - limit) < 1e-4) {
       steps.push({ label: "Direct substitution", value: `f(${point}) = ${formatValue(direct)}` });
     }

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: '%s | Engineering Calculator Hub',
   },
   description:
-    'Forty-one transparent engineering calculators, tolerance-aware electrical design tools, and a local-first workspace for review-ready calculation sheets.',
+    'Forty-four transparent engineering calculators, tolerance-aware electrical design tools, and a reproducible local-first workspace for review-ready calculation evidence.',
   keywords: [
     'engineering calculator',
     'ohms law calculator',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     siteName: 'Engineering Calculator Hub',
     title: 'Fast enough for a calculator. Rigorous enough for a design review.',
     description:
-      'Forty-one transparent engineering tools plus a local-first workspace for auditable design calculations.',
+      'Forty-four transparent engineering tools plus a reproducible workspace for reviewable design calculations.',
     images: [
       {
         url: '/og-v2.png',
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Fast enough for a calculator. Rigorous enough for a design review.',
-    description: 'Forty-one transparent engineering tools and a project-based calculation workspace.',
+    description: 'Forty-four transparent engineering tools and a project-based calculation workspace.',
     images: ['/og-v2.png'],
   },
   robots: {
@@ -66,6 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable}`}
     >
       <head>

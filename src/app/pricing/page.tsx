@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { calculators } from '@/data/calculators';
+import { PRO_PRICE_CONTRACT } from '@/lib/stripeEntitlements';
 
 export const metadata: Metadata = {
   title: 'Pricing – Free Calculators and Engineering Workspace Pro',
@@ -8,10 +10,12 @@ export const metadata: Metadata = {
 };
 
 const comparison = [
-  ['All 41 calculators', true, true],
+  [`All ${calculators.length} calculators`, true, true],
   ['Transparent formulas and worked steps', true, true],
-  ['Local design projects', true, true],
-  ['CSV, JSON, and print-to-PDF export', true, true],
+  ['Reproducible input/output snapshots', true, true],
+  ['Guided engineering project templates', true, true],
+  ['Local backup/import and project duplication', true, true],
+  ['CSV, JSON, and review-ready PDF export', true, true],
   ['Secure cloud workspace backup', false, true],
   ['Sync up to 100 projects', false, true],
   ['Cloud-backed design worksheets', false, true],
@@ -48,7 +52,7 @@ export default function PricingPage() {
               For quick answers, learning, and local project notes. No account required.
             </p>
             <ul className="mt-6 space-y-3 text-sm text-surface-700 dark:text-surface-300">
-              {['All calculators and worked steps', 'Local-first Engineering Workspace', 'CSV, JSON, and PDF-ready export', 'Shareable calculator links'].map((feature) => (
+              {['All calculators and worked steps', 'Reopenable calculation evidence', 'Guided project templates', 'Local backup, CSV, JSON, and PDF export'].map((feature) => (
                 <li key={feature} className="flex gap-2"><span className="text-emerald-500">✓</span>{feature}</li>
               ))}
             </ul>
@@ -61,19 +65,23 @@ export default function PricingPage() {
             <div className="absolute right-5 top-5 rounded-full bg-brand-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-700 dark:bg-brand-950 dark:text-brand-300">Best for individuals</div>
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand-600 dark:text-brand-400">Pro</p>
             <div className="mt-4 flex items-end gap-2">
-              <span className="font-display text-5xl font-bold text-surface-950 dark:text-white">$9</span>
-              <span className="pb-1 text-surface-400">USD / month</span>
+              <span className="font-display text-5xl font-bold text-surface-950 dark:text-white">
+                ${(PRO_PRICE_CONTRACT.unitAmount / 100).toFixed(0)}
+              </span>
+              <span className="pb-1 text-surface-400">
+                {PRO_PRICE_CONTRACT.currency.toUpperCase()} / {PRO_PRICE_CONTRACT.interval}
+              </span>
             </div>
             <p className="mt-2 text-xs font-semibold text-brand-600 dark:text-brand-400">Founding target: $72/year when annual billing launches.</p>
             <p className="mt-4 text-sm leading-relaxed text-surface-500 dark:text-surface-400">
               For engineers who want their calculations organised, backed up, and ready to review.
             </p>
             <ul className="mt-6 space-y-3 text-sm text-surface-700 dark:text-surface-300">
-              {['Everything in Free', 'Secure cloud workspace backup', 'Sync up to 100 design projects', 'Restore work on another device', 'Cloud-backed design worksheets', 'Priority feature requests'].map((feature) => (
+              {['Everything in Free', 'Secure cloud workspace backup', 'Sync up to 100 design projects', 'Restore work on another device', 'Cloud-backed evidence packs', 'Priority feature requests'].map((feature) => (
                 <li key={feature} className="flex gap-2"><span className="text-brand-500">✓</span>{feature}</li>
               ))}
             </ul>
-            <Link href="/account" className="mt-8 inline-flex w-full justify-center rounded-xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-700">
+            <Link href="/account?intent=pro" className="mt-8 inline-flex w-full justify-center rounded-xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-700">
               Start with Pro
             </Link>
             <p className="mt-3 text-center text-xs text-surface-400">Secure checkout and self-service cancellation through Stripe.</p>
@@ -101,8 +109,8 @@ export default function PricingPage() {
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-400">Compare plans</p>
             <h2 className="mt-3 font-display text-3xl font-bold text-surface-950 dark:text-white">Useful before you pay. Valuable when you do.</h2>
           </div>
-          <div className="mt-8 overflow-hidden rounded-2xl border border-surface-200 dark:border-surface-800">
-            <table className="w-full text-left text-sm">
+          <div className="mt-8 overflow-x-auto rounded-2xl border border-surface-200 dark:border-surface-800">
+            <table className="min-w-[42rem] w-full text-left text-sm">
               <thead className="bg-surface-50 text-surface-500 dark:bg-surface-900 dark:text-surface-400">
                 <tr>
                   <th className="px-5 py-4 font-semibold">Capability</th>

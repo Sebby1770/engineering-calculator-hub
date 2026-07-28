@@ -15,6 +15,7 @@ const store = new Map<string, WindowEntry>();
 
 // Guard against unbounded memory growth on long-lived instances.
 const MAX_TRACKED_KEYS = 10_000;
+const MAX_KEY_LENGTH = 256;
 
 export interface RateLimitResult {
   ok: boolean;
@@ -25,15 +26,23 @@ export interface RateLimitResult {
 
 export function rateLimit(key: string, limit = 5, windowMs = 60_000): RateLimitResult {
   const now = Date.now();
-  const entry = store.get(key);
+  const normalizedKey = key.slice(0, MAX_KEY_LENGTH);
+  const entry = store.get(normalizedKey);
 
   if (!entry || entry.resetAt <= now) {
-    if (store.size > MAX_TRACKED_KEYS) {
+    if (!entry && store.size >= MAX_TRACKED_KEYS) {
       store.forEach((value, k) => {
         if (value.resetAt <= now) store.delete(k);
       });
+      // If every window is still live, evict oldest insertion-order entries so
+      // attacker-controlled identifiers cannot grow process memory without bound.
+      while (store.size >= MAX_TRACKED_KEYS) {
+        const oldestKey = store.keys().next().value;
+        if (typeof oldestKey !== 'string') break;
+        store.delete(oldestKey);
+      }
     }
-    store.set(key, { count: 1, resetAt: now + windowMs });
+    store.set(normalizedKey, { count: 1, resetAt: now + windowMs });
     return { ok: true, limit, remaining: limit - 1, retryAfterSeconds: 0 };
   }
 

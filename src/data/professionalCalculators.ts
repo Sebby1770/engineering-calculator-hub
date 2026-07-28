@@ -3,9 +3,12 @@ import type { EngineeringResult } from '@/lib/engineeringCalculations';
 import {
   calculateAdcResolution,
   calculateBatteryRuntime,
+  calculateDcWireDrop,
   calculateLedResistor,
+  calculateOpAmpGain,
   calculatePcbTraceDrop,
   calculateRcLowPass,
+  calculateRegulatorThermal,
   calculateSeriesRlc,
   calculateThreePhasePower,
 } from '@/lib/engineeringCalculations';
@@ -19,6 +22,7 @@ export interface EngineeringToolField {
   max?: number;
   step?: number;
   help?: string;
+  options?: { value: number; label: string }[];
 }
 
 export interface EngineeringToolDefinition {
@@ -174,6 +178,69 @@ const professionalCalculatorConfigsBase: CalculatorConfig[] = [
     ],
     relatedSlugs: ['rc-time-constant-calculator', 'series-rlc-resonance-calculator', 'frequency-calculator', 'adc-resolution-calculator'],
   },
+  {
+    meta: {
+      slug: 'dc-wire-voltage-drop-designer',
+      title: 'DC Wire Voltage Drop Designer – Temperature and Minimum Cable Area',
+      shortTitle: 'DC Wire Voltage Drop',
+      description: 'Estimate copper or aluminium round-trip DC cable resistance, voltage drop, delivered voltage, loss, and minimum cross-section for a chosen drop limit.',
+      category: 'electrical',
+      icon: 'WIRE',
+      keywords: ['DC cable voltage drop', 'wire resistance', 'minimum cable size', 'copper aluminium cable'],
+      popular: true,
+      new: true,
+    },
+    formula: 'Rloop = ρT·(2L)/A,  Vdrop = IRloop,  Amin = ρT·(2L)I/Vallowed',
+    formulaExplanation: 'DC conductor resistance uses the full outgoing-and-return path. Copper or aluminium resistivity is adjusted from 20°C using its temperature coefficient, then the entered cable area is checked against the area required by the selected voltage-drop target.',
+    exampleUsage: 'A 10 m one-way copper run carrying 10 A through 2.5 mm² at 20°C has about 0.138 Ω loop resistance and 1.38 V drop. On a 12 V system, a 3% target requires about 9.58 mm² before choosing a practical cable size.',
+    faqs: [
+      { question: 'Why is the cable length doubled?', answer: 'A DC circuit normally includes an outgoing and return conductor. Enter the physical one-way distance; the calculator models twice that length.' },
+      { question: 'Does the minimum area prove the cable is safe or code compliant?', answer: 'No. It addresses DC voltage drop only. Ampacity, insulation, grouping, installation method, fault protection, terminations, and local wiring rules require separate checks.' },
+    ],
+    relatedSlugs: ['ohms-law-calculator', 'power-calculator', 'pcb-trace-voltage-drop-calculator', 'battery-runtime-calculator', 'regulator-thermal-designer'],
+  },
+  {
+    meta: {
+      slug: 'regulator-thermal-designer',
+      title: 'Regulator Thermal Designer – LDO and Buck Loss, Junction Temperature and θJA',
+      shortTitle: 'Regulator Thermal Designer',
+      description: 'Estimate LDO or buck-regulator power loss, efficiency, junction temperature, thermal margin, and the maximum allowable junction-to-ambient thermal resistance.',
+      category: 'electrical',
+      icon: 'TJ',
+      keywords: ['LDO thermal calculator', 'buck converter loss', 'junction temperature', 'theta JA'],
+      popular: true,
+      new: true,
+    },
+    formula: 'Ploss = Pin − Pout,  TJ = TA + Ploss·θJA,  θJA,max = (TJ,max − TA)/Ploss',
+    formulaExplanation: 'The LDO model approximates input current as load current, while the buck model derives input power from the entered conversion efficiency. Dissipation and junction-to-ambient thermal resistance then estimate nominal junction temperature and available thermal margin.',
+    exampleUsage: 'An LDO converting 12 V to 5 V at 0.5 A dissipates about 3.5 W. At 25°C ambient and 30°C/W, its estimated junction temperature is 130°C, which exceeds a 125°C limit by 5°C.',
+    faqs: [
+      { question: 'Why is the buck efficiency an input?', answer: 'Switching loss depends on the actual controller, MOSFETs, inductor, frequency, layout, and operating point. Use a conservative datasheet or measured efficiency for the intended conditions.' },
+      { question: 'Is θJA a fixed package property?', answer: 'Not by itself. Published θJA depends strongly on the test board, copper area, airflow, enclosure, and mounting. Model the actual PCB and verify thermally.' },
+    ],
+    relatedSlugs: ['power-calculator', 'battery-runtime-calculator', 'pcb-trace-voltage-drop-calculator', 'dc-wire-voltage-drop-designer', 'ohms-law-calculator'],
+  },
+  {
+    meta: {
+      slug: 'op-amp-gain-checker',
+      title: 'Op-Amp Gain Checker – Output Range, GBW and Slew-Rate Limits',
+      shortTitle: 'Op-Amp Gain Checker',
+      description: 'Check inverting or non-inverting gain, referenced sine-wave output range, noise gain, closed-loop bandwidth, slew requirement, input common-mode range, and output swing.',
+      category: 'signals',
+      icon: 'OP',
+      keywords: ['op amp gain calculator', 'gain bandwidth', 'slew rate calculator', 'input common mode output swing'],
+      popular: true,
+      new: true,
+    },
+    formula: 'Av,NI = 1 + Rf/Rg,  Av,I = −Rf/Rin,  BW ≈ GBW/noise gain,  SRmin = 2πfVpeak',
+    formulaExplanation: 'The resistor ratio determines ideal signal gain. The noise gain estimates closed-loop bandwidth from gain-bandwidth product, while the entered signal frequency and output excursion set a minimum sine-wave slew rate. Nominal input common-mode and output-swing checks use limits copied from the chosen op-amp datasheet.',
+    exampleUsage: 'A non-inverting stage with Rg = 10 kΩ and Rf = 40 kΩ has gain 5 V/V. A 0.4 V peak signal centred at 2.5 V produces 2 V peak output (0.5–4.5 V); 10 MHz GBW gives about 2 MHz bandwidth, while 100 kHz requires about 1.26 V/µs slew rate.',
+    faqs: [
+      { question: 'Why is bandwidth based on noise gain?', answer: 'For a voltage-feedback op amp, loop gain and approximate closed-loop bandwidth are governed by noise gain. In an inverting stage, noise gain is 1 + Rf/Rin even though signal gain is −Rf/Rin.' },
+      { question: 'Does passing these checks guarantee stability?', answer: 'No. Capacitive loading, feedback capacitance, source impedance, layout, phase margin, output current, and device-specific behavior still require datasheet analysis or simulation.' },
+    ],
+    relatedSlugs: ['rc-low-pass-filter-designer', 'adc-resolution-calculator', 'voltage-divider-calculator', 'db-to-voltage-converter', 'series-rlc-resonance-calculator'],
+  },
 ];
 
 export const professionalCalculatorConfigs: CalculatorConfig[] =
@@ -183,7 +250,7 @@ export const professionalCalculatorConfigs: CalculatorConfig[] =
       label: 'Automated reference cases',
       summary:
         'The deterministic formula path is covered by reproducible reference inputs and expected outputs in the project test suite.',
-      lastReviewed: '15 July 2026',
+      lastReviewed: '28 July 2026',
     },
   }));
 
@@ -287,6 +354,109 @@ export const engineeringToolDefinitions: EngineeringToolDefinition[] = [
       resistanceKohm: values.resistanceKohm,
       capacitanceNf: values.capacitanceNf,
       signalFrequencyHz: values.signalFrequencyHz,
+    }),
+  },
+  {
+    slug: 'dc-wire-voltage-drop-designer',
+    fields: [
+      {
+        id: 'materialCode',
+        label: 'Conductor material',
+        defaultValue: 0,
+        options: [
+          { value: 0, label: 'Copper' },
+          { value: 1, label: 'Aluminium' },
+        ],
+      },
+      { id: 'oneWayLengthM', label: 'One-way cable length', unit: 'm', defaultValue: 10, min: 0.001, step: 0.1 },
+      { id: 'conductorAreaMm2', label: 'Conductor cross-section', unit: 'mm²', defaultValue: 2.5, min: 0.001, step: 0.1 },
+      { id: 'currentA', label: 'DC load current', unit: 'A', defaultValue: 10, min: 0.001, step: 0.1 },
+      { id: 'systemVoltage', label: 'Source voltage', unit: 'V', defaultValue: 12, min: 0.001, step: 0.1 },
+      { id: 'conductorTemperatureC', label: 'Conductor temperature', unit: '°C', defaultValue: 20, min: -50, max: 200, step: 1, help: 'Use expected conductor temperature, not necessarily room temperature.' },
+      { id: 'maxDropPercent', label: 'Maximum permitted drop', unit: '%', defaultValue: 3, min: 0.01, max: 99.99, step: 0.1 },
+    ],
+    calculate: (values) => calculateDcWireDrop({
+      materialCode: values.materialCode,
+      oneWayLengthM: values.oneWayLengthM,
+      conductorAreaMm2: values.conductorAreaMm2,
+      currentA: values.currentA,
+      systemVoltage: values.systemVoltage,
+      conductorTemperatureC: values.conductorTemperatureC,
+      maxDropPercent: values.maxDropPercent,
+    }),
+  },
+  {
+    slug: 'regulator-thermal-designer',
+    fields: [
+      {
+        id: 'topologyCode',
+        label: 'Regulator topology',
+        defaultValue: 0,
+        options: [
+          { value: 0, label: 'LDO / linear regulator' },
+          { value: 1, label: 'Buck converter' },
+        ],
+      },
+      { id: 'inputVoltage', label: 'Input voltage', unit: 'V', defaultValue: 12, min: 0.001, step: 0.1 },
+      { id: 'outputVoltage', label: 'Output voltage', unit: 'V', defaultValue: 5, min: 0.001, step: 0.1 },
+      { id: 'outputCurrentA', label: 'Output current', unit: 'A', defaultValue: 0.5, min: 0.001, step: 0.1 },
+      { id: 'buckEfficiencyPercent', label: 'Buck efficiency', unit: '%', defaultValue: 90, min: 0.01, max: 99.99, step: 0.1, help: 'Used for buck mode; LDO efficiency comes from Vout/Vin.' },
+      { id: 'ambientTemperatureC', label: 'Local ambient temperature', unit: '°C', defaultValue: 25, step: 1 },
+      { id: 'thetaJaCPerW', label: 'Effective junction-to-ambient θJA', unit: '°C/W', defaultValue: 30, min: 0.001, step: 1 },
+      { id: 'maxJunctionTemperatureC', label: 'Maximum junction temperature', unit: '°C', defaultValue: 125, step: 1 },
+    ],
+    calculate: (values) => calculateRegulatorThermal({
+      topologyCode: values.topologyCode,
+      inputVoltage: values.inputVoltage,
+      outputVoltage: values.outputVoltage,
+      outputCurrentA: values.outputCurrentA,
+      buckEfficiencyPercent: values.buckEfficiencyPercent,
+      ambientTemperatureC: values.ambientTemperatureC,
+      thetaJaCPerW: values.thetaJaCPerW,
+      maxJunctionTemperatureC: values.maxJunctionTemperatureC,
+    }),
+  },
+  {
+    slug: 'op-amp-gain-checker',
+    fields: [
+      {
+        id: 'modeCode',
+        label: 'Amplifier mode',
+        defaultValue: 0,
+        options: [
+          { value: 0, label: 'Non-inverting' },
+          { value: 1, label: 'Inverting' },
+        ],
+      },
+      { id: 'inputPeakVoltage', label: 'Input sine-wave peak', unit: 'V', defaultValue: 0.4, min: 0.0001, step: 0.1 },
+      { id: 'referenceVoltage', label: 'Signal reference / bias', unit: 'V', defaultValue: 2.5, step: 0.1, help: 'The sine wave is modelled as centred on this voltage.' },
+      { id: 'inputResistanceKohm', label: 'Rg or Rin', unit: 'kΩ', defaultValue: 10, min: 0.0001, step: 0.1 },
+      { id: 'feedbackResistanceKohm', label: 'Feedback resistance Rf', unit: 'kΩ', defaultValue: 40, min: 0.0001, step: 0.1 },
+      { id: 'supplyLowVoltage', label: 'Low supply rail', unit: 'V', defaultValue: 0, step: 0.1 },
+      { id: 'supplyHighVoltage', label: 'High supply rail', unit: 'V', defaultValue: 5, step: 0.1 },
+      { id: 'commonModeLowVoltage', label: 'Input common-mode low', unit: 'V', defaultValue: 0.1, step: 0.1 },
+      { id: 'commonModeHighVoltage', label: 'Input common-mode high', unit: 'V', defaultValue: 4.9, step: 0.1 },
+      { id: 'outputSwingLowVoltage', label: 'Output swing low', unit: 'V', defaultValue: 0.1, step: 0.1 },
+      { id: 'outputSwingHighVoltage', label: 'Output swing high', unit: 'V', defaultValue: 4.8, step: 0.1 },
+      { id: 'gainBandwidthMhz', label: 'Gain-bandwidth product', unit: 'MHz', defaultValue: 10, min: 0.0001, step: 0.1 },
+      { id: 'signalFrequencyKhz', label: 'Signal frequency', unit: 'kHz', defaultValue: 100, min: 0.0001, step: 1 },
+      { id: 'slewRateVPerUs', label: 'Available slew rate', unit: 'V/µs', defaultValue: 2, min: 0.0001, step: 0.1 },
+    ],
+    calculate: (values) => calculateOpAmpGain({
+      modeCode: values.modeCode,
+      inputPeakVoltage: values.inputPeakVoltage,
+      referenceVoltage: values.referenceVoltage,
+      inputResistanceKohm: values.inputResistanceKohm,
+      feedbackResistanceKohm: values.feedbackResistanceKohm,
+      supplyLowVoltage: values.supplyLowVoltage,
+      supplyHighVoltage: values.supplyHighVoltage,
+      commonModeLowVoltage: values.commonModeLowVoltage,
+      commonModeHighVoltage: values.commonModeHighVoltage,
+      outputSwingLowVoltage: values.outputSwingLowVoltage,
+      outputSwingHighVoltage: values.outputSwingHighVoltage,
+      gainBandwidthMhz: values.gainBandwidthMhz,
+      signalFrequencyKhz: values.signalFrequencyKhz,
+      slewRateVPerUs: values.slewRateVPerUs,
     }),
   },
 ];

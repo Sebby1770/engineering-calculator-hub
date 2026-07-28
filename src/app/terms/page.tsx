@@ -73,7 +73,7 @@ export default function TermsPage() {
       <h1 className="mt-2 font-display text-3xl font-bold text-surface-900 dark:text-white">
         Terms of Use
       </h1>
-      <p className="mt-3 text-sm text-surface-500 dark:text-surface-400">Last updated July 15, 2026</p>
+      <p className="mt-3 text-sm text-surface-500 dark:text-surface-400">Last updated July 28, 2026</p>
 
       <div className="mt-8 space-y-8">
         {sections.map((section) => (

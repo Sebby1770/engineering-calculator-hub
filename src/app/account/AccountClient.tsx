@@ -10,6 +10,8 @@ interface SubscriptionState {
   active: boolean;
   status: string | null;
   currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  canceledAt: string | null;
   hasBilling: boolean;
 }
 
@@ -25,9 +27,12 @@ export default function AccountClient() {
   const [busy, setBusy] = useState<'signin' | 'upgrade' | 'portal' | null>(null);
   const [error, setError] = useState('');
   const [upgraded, setUpgraded] = useState(false);
+  const [proIntent, setProIntent] = useState(false);
 
   useEffect(() => {
-    setUpgraded(new URLSearchParams(window.location.search).get('upgraded') === '1');
+    const params = new URLSearchParams(window.location.search);
+    setUpgraded(params.get('upgraded') === '1');
+    setProIntent(params.get('intent') === 'pro');
   }, []);
 
   // Track the auth session.
@@ -82,7 +87,7 @@ export default function AccountClient() {
     try {
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: trimmed,
-        options: { emailRedirectTo: `${window.location.origin}/account` },
+        options: { emailRedirectTo: `${window.location.origin}/account${proIntent ? '?intent=pro' : ''}` },
       });
       if (otpError) throw otpError;
       setLinkSent(true);
@@ -135,7 +140,7 @@ export default function AccountClient() {
         Account
       </p>
       <h1 className="mt-2 font-display text-3xl font-bold text-surface-900 dark:text-white">
-        {session ? 'Your account' : 'Sign in'}
+        {session ? 'Your account' : proIntent ? 'Sign in to continue to Pro' : 'Sign in'}
       </h1>
 
       {!supabase ? (
@@ -149,6 +154,11 @@ export default function AccountClient() {
         <p className="mt-8 text-surface-500 dark:text-surface-400">Loading…</p>
       ) : !session ? (
         <div className="mt-8 rounded-xl border border-surface-200 bg-white p-6 shadow-sm dark:border-surface-800 dark:bg-surface-900">
+          {proIntent && !linkSent && (
+            <div className="mb-5 rounded-lg border border-brand-200 bg-brand-50 p-3 text-sm leading-relaxed text-brand-800 dark:border-brand-900/60 dark:bg-brand-950/30 dark:text-brand-200">
+              Your Pro choice is saved. After signing in, you can continue directly to secure Stripe checkout.
+            </div>
+          )}
           {linkSent ? (
             <div className="text-center">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400">
@@ -249,7 +259,11 @@ export default function AccountClient() {
                 </div>
                 {isPro && periodEnd && (
                   <p className="mt-1 text-sm text-surface-500 dark:text-surface-400">
-                    Renews {periodEnd}
+                    {subscription?.cancelAtPeriodEnd
+                      ? `Ends ${periodEnd}`
+                      : subscription?.status === 'trialing'
+                        ? `Trial period ends ${periodEnd}`
+                        : `Renews ${periodEnd}`}
                   </p>
                 )}
                 {!isPro && (
@@ -268,7 +282,7 @@ export default function AccountClient() {
                   disabled={busy === 'upgrade'}
                   className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {busy === 'upgrade' ? 'Opening checkout…' : 'Upgrade to Pro'}
+                  {busy === 'upgrade' ? 'Opening checkout…' : proIntent ? 'Continue to secure checkout' : 'Upgrade to Pro'}
                 </button>
               )}
               {!isPro && (

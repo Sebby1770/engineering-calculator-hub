@@ -44,7 +44,7 @@ const sections: { title: string; paragraphs: React.ReactNode[] }[] = [
         </a>
         . When you sign in, Supabase processes your email address and authentication session. We
         keep a profile record containing your account ID, email, Stripe customer identifier, and
-        subscription identifier, status, and latest billing-event time.
+        subscription identifier, status, billing-period end, and cancellation state.
       </>,
       <>
         Pro cloud sync is manual. Choosing “Save cloud” uploads the complete workspace document
@@ -66,7 +66,10 @@ const sections: { title: string; paragraphs: React.ReactNode[] }[] = [
         our servers. For subscriptions, we keep the Stripe customer identifier, price identifier,
         subscription status, and current billing-period end so we can grant Pro access. One-off
         support payments keep the checkout session ID, amount, currency, and payment status. We do
-        not store card details.
+        not store card details. To process duplicate or delayed Stripe notifications safely, a
+        private event inbox stores the event ID and type, related object ID, delivery time,
+        processing status, and a short failure message when processing fails. It does not store the
+        full Stripe event payload.
       </>,
     ],
   },
@@ -190,7 +193,7 @@ export default function PrivacyPage() {
       <h1 className="mt-2 font-display text-3xl font-bold text-surface-900 dark:text-white">
         Privacy Policy
       </h1>
-      <p className="mt-3 text-sm text-surface-500 dark:text-surface-400">Last updated July 15, 2026</p>
+      <p className="mt-3 text-sm text-surface-500 dark:text-surface-400">Last updated July 28, 2026</p>
 
       <div className="mt-8 space-y-8">
         {sections.map((section) => (

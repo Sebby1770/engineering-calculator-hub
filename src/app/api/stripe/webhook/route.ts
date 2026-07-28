@@ -1,31 +1,295 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { isSupabaseConfigured, insertRow, upsertRow, patchRows } from '@/lib/supabaseAdmin';
+import {
+  insertRowReturning,
+  isSupabaseConfigured,
+  patchRowsReturning,
+  selectRows,
+  upsertRowReturning,
+} from '@/lib/supabaseAdmin';
 import { readTextWithLimit } from '@/lib/requestBody';
+import {
+  chooseCanonicalSubscription,
+  getStripeObjectId,
+  isSubscriptionLifecycleEvent,
+  toSubscriptionProfileSnapshot,
+  type SubscriptionProfileSnapshot,
+} from '@/lib/stripeEntitlements';
 
 export const runtime = 'nodejs';
 
 const MAX_WEBHOOK_BYTES = 1_000_000;
+
+type EventStatus = 'pending' | 'processed' | 'ignored' | 'failed';
+
+interface StripeEventRow {
+  event_id: string;
+  status: EventStatus;
+}
+
+interface ProfileOwnerRow {
+  id: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+}
+
+interface StoredProfileRow {
+  id: string;
+  stripe_subscription_id: string | null;
+}
+
+interface DonationRow {
+  stripe_session_id: string;
+}
 
 function getStripeClient() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   return secretKey ? new Stripe(secretKey) : null;
 }
 
-// Stripe moved current_period_end from the subscription onto its items in
-// newer API versions — read it from either location.
-function getPeriodEnd(subscription: Stripe.Subscription): string | null {
-  const item = subscription.items?.data?.[0] as unknown as
-    | { current_period_end?: number }
-    | undefined;
-  const legacy = subscription as unknown as { current_period_end?: number };
-  const timestamp = item?.current_period_end ?? legacy.current_period_end;
-  return timestamp ? new Date(timestamp * 1000).toISOString() : null;
+function safeErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : 'Unknown processing error.';
+  return message.slice(0, 1000);
 }
 
-function getCustomerId(customer: string | Stripe.Customer | Stripe.DeletedCustomer | null) {
-  if (!customer) return null;
-  return typeof customer === 'string' ? customer : customer.id;
+async function registerEvent(event: Stripe.Event) {
+  const inserted = await insertRowReturning<StripeEventRow>(
+    'stripe_events',
+    {
+      event_id: event.id,
+      event_type: event.type,
+      object_id: getStripeObjectId(event),
+      event_created_at: event.created,
+      livemode: event.livemode,
+      status: 'pending',
+    },
+    { onConflict: 'event_id' },
+  );
+
+  if (!inserted.ok) {
+    throw new Error(`Unable to persist Stripe event (database status ${inserted.status}).`);
+  }
+  if (inserted.rows.length === 1) return { terminal: false };
+  if (inserted.rows.length > 1) throw new Error('Stripe event insert returned multiple rows.');
+
+  const existing = await selectRows<StripeEventRow>(
+    'stripe_events',
+    { event_id: event.id },
+    'event_id,status',
+  );
+  if (existing === null || existing.length !== 1) {
+    throw new Error('Unable to load the existing Stripe event record.');
+  }
+
+  return {
+    terminal: existing[0].status === 'processed' || existing[0].status === 'ignored',
+  };
+}
+
+async function markEvent(
+  eventId: string,
+  status: Exclude<EventStatus, 'pending'>,
+  lastError: string | null = null,
+) {
+  const terminal = status === 'processed' || status === 'ignored';
+  const updated = await patchRowsReturning<StripeEventRow>(
+    'stripe_events',
+    { event_id: eventId },
+    {
+      status,
+      last_error: lastError,
+      processed_at: terminal ? new Date().toISOString() : null,
+    },
+    { status: 'in.(pending,failed)' },
+  );
+  if (updated.ok && updated.rows.length === 1 && updated.rows[0].event_id === eventId) {
+    return;
+  }
+
+  // Concurrent duplicate deliveries can finish in either order. Never let a
+  // later failure downgrade an event that another delivery already completed.
+  if (updated.ok && updated.rows.length === 0) {
+    const existing = await selectRows<StripeEventRow>(
+      'stripe_events',
+      { event_id: eventId },
+      'event_id,status',
+    );
+    if (
+      existing?.length === 1 &&
+      (existing[0].status === 'processed' || existing[0].status === 'ignored')
+    ) {
+      return;
+    }
+  }
+  throw new Error(`Unable to mark Stripe event ${status} (database status ${updated.status}).`);
+}
+
+async function loadOwnerBySnapshot(snapshot: SubscriptionProfileSnapshot) {
+  const columns = 'id,stripe_customer_id,stripe_subscription_id';
+  let rows: ProfileOwnerRow[] | null = null;
+
+  if (snapshot.userId) {
+    rows = await selectRows<ProfileOwnerRow>('profiles', { id: snapshot.userId }, columns);
+  } else if (snapshot.subscriptionId) {
+    rows = await selectRows<ProfileOwnerRow>(
+      'profiles',
+      { stripe_subscription_id: snapshot.subscriptionId },
+      columns,
+    );
+  }
+  if ((rows?.length ?? 0) === 0 && snapshot.customerId) {
+    rows = await selectRows<ProfileOwnerRow>(
+      'profiles',
+      { stripe_customer_id: snapshot.customerId },
+      columns,
+    );
+  }
+
+  if (rows === null) throw new Error('Unable to resolve the subscription owner.');
+  if (rows.length !== 1) throw new Error('Subscription owner profile was not found or was ambiguous.');
+
+  const profile = rows[0];
+  if (snapshot.userId && profile.id !== snapshot.userId) {
+    throw new Error('Subscription metadata does not match the stored account owner.');
+  }
+  if (
+    profile.stripe_customer_id &&
+    snapshot.customerId &&
+    profile.stripe_customer_id !== snapshot.customerId
+  ) {
+    throw new Error('Subscription customer does not match the stored billing account.');
+  }
+  return profile;
+}
+
+async function syncCurrentSubscription(
+  stripe: Stripe,
+  subscriptionId: string,
+  expectedUserId: string | null,
+) {
+  const expectedPriceId = process.env.STRIPE_PRO_PRICE_ID;
+  if (!expectedPriceId) throw new Error('STRIPE_PRO_PRICE_ID is not configured.');
+
+  const triggeringSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const triggeringSnapshot = toSubscriptionProfileSnapshot(
+    triggeringSubscription,
+    expectedPriceId,
+  );
+  if (!triggeringSnapshot.customerId) throw new Error('Subscription has no Stripe customer.');
+  if (expectedUserId && triggeringSnapshot.userId !== expectedUserId) {
+    throw new Error('Checkout and subscription ownership metadata do not match.');
+  }
+
+  const owner = await loadOwnerBySnapshot(triggeringSnapshot);
+  if (expectedUserId && owner.id !== expectedUserId) {
+    throw new Error('Checkout owner does not match the stored account owner.');
+  }
+
+  // Stripe does not guarantee webhook order. Re-read all current subscriptions
+  // for this customer and select the current active Pro subscription, rather
+  // than applying the potentially stale event payload.
+  const subscriptions = await stripe.subscriptions.list({
+    customer: triggeringSnapshot.customerId,
+    status: 'all',
+    limit: 100,
+  });
+  const canonicalSubscription = chooseCanonicalSubscription(
+    subscriptions.data,
+    triggeringSubscription,
+    owner.stripe_subscription_id,
+    expectedPriceId,
+  );
+  const snapshot = toSubscriptionProfileSnapshot(canonicalSubscription, expectedPriceId);
+  if (!snapshot.customerId || snapshot.customerId !== triggeringSnapshot.customerId) {
+    throw new Error('Canonical subscription customer is inconsistent.');
+  }
+  if (snapshot.userId && snapshot.userId !== owner.id) {
+    throw new Error('Canonical subscription metadata belongs to a different account.');
+  }
+
+  const stored = await upsertRowReturning<StoredProfileRow>(
+    'profiles',
+    {
+      id: owner.id,
+      stripe_customer_id: snapshot.customerId,
+      stripe_subscription_id: snapshot.subscriptionId,
+      subscription_status: snapshot.status,
+      price_id: snapshot.priceId,
+      current_period_end: snapshot.currentPeriodEnd,
+      cancel_at_period_end: snapshot.cancelAtPeriodEnd,
+      canceled_at: snapshot.canceledAt,
+      updated_at: new Date().toISOString(),
+    },
+    'id',
+  );
+  if (
+    !stored.ok ||
+    stored.rows.length !== 1 ||
+    stored.rows[0].id !== owner.id ||
+    stored.rows[0].stripe_subscription_id !== snapshot.subscriptionId
+  ) {
+    throw new Error(`Subscription profile mutation was not verified (database status ${stored.status}).`);
+  }
+}
+
+async function processCheckoutSession(stripe: Stripe, sessionId: string) {
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+  if (session.mode === 'payment') {
+    const stored = await upsertRowReturning<DonationRow>(
+      'donations',
+      {
+        stripe_session_id: session.id,
+        amount_total: session.amount_total,
+        currency: session.currency,
+        payment_status: session.payment_status,
+      },
+      'stripe_session_id',
+    );
+    if (
+      !stored.ok ||
+      stored.rows.length !== 1 ||
+      stored.rows[0].stripe_session_id !== session.id
+    ) {
+      throw new Error(`Donation mutation was not verified (database status ${stored.status}).`);
+    }
+    return 'processed' as const;
+  }
+
+  if (session.mode === 'subscription') {
+    const subscriptionId =
+      typeof session.subscription === 'string'
+        ? session.subscription
+        : session.subscription?.id ?? null;
+    if (!subscriptionId || !session.client_reference_id) {
+      throw new Error('Completed subscription checkout is missing ownership identifiers.');
+    }
+    await syncCurrentSubscription(
+      stripe,
+      subscriptionId,
+      session.client_reference_id,
+    );
+    return 'processed' as const;
+  }
+
+  return 'ignored' as const;
+}
+
+async function processEvent(stripe: Stripe, event: Stripe.Event) {
+  const objectId = getStripeObjectId(event);
+
+  if (event.type === 'checkout.session.completed') {
+    if (!objectId) throw new Error('Checkout event has no object identifier.');
+    return processCheckoutSession(stripe, objectId);
+  }
+
+  if (isSubscriptionLifecycleEvent(event.type)) {
+    if (!objectId) throw new Error('Subscription event has no object identifier.');
+    await syncCurrentSubscription(stripe, objectId, null);
+    return 'processed' as const;
+  }
+
+  return 'ignored' as const;
 }
 
 export async function POST(request: Request) {
@@ -36,7 +300,6 @@ export async function POST(request: Request) {
   if (!stripe || !webhookSecret) {
     return NextResponse.json({ error: 'Stripe webhook is not configured.' }, { status: 503 });
   }
-
   if (!signature) {
     return NextResponse.json({ error: 'Missing Stripe signature.' }, { status: 400 });
   }
@@ -52,119 +315,33 @@ export async function POST(request: Request) {
     }
     event = stripe.webhooks.constructEvent(bodyResult.text, signature, webhookSecret);
   } catch (error) {
-    console.error('Stripe webhook signature verification failed:', error);
+    console.error('Stripe webhook signature verification failed:', safeErrorMessage(error));
     return NextResponse.json({ error: 'Invalid Stripe webhook payload.' }, { status: 400 });
   }
 
   if (!isSupabaseConfigured()) {
-    // Fail closed so Stripe retries after a transient configuration incident;
-    // acknowledging here would silently lose subscription entitlements.
     return NextResponse.json({ error: 'Webhook persistence is unavailable.' }, { status: 503 });
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    console.info('Stripe checkout completed:', session.id, 'mode:', session.mode);
-
-    if (session.mode === 'payment') {
-      // One-off support payment → donation log. Idempotent: retried
-      // deliveries hit the unique stripe_session_id and are ignored.
-      const stored = await insertRow(
-        'donations',
-        {
-          stripe_session_id: session.id,
-          amount_total: session.amount_total,
-          currency: session.currency,
-          payment_status: session.payment_status,
-        },
-        { onConflict: 'stripe_session_id' }
-      );
-      if (!stored.ok) {
-        console.error('Failed to record donation, status:', stored.status);
-        return NextResponse.json({ error: 'Failed to record event.' }, { status: 500 });
-      }
+  try {
+    const registration = await registerEvent(event);
+    if (registration.terminal) {
+      return NextResponse.json({ received: true, duplicate: true });
     }
 
-    if (session.mode === 'subscription' && session.client_reference_id) {
-      // Pro subscription started → attach the Stripe customer + status to the
-      // Supabase user (client_reference_id carries the user id we set at
-      // checkout creation).
-      const customerId = getCustomerId(session.customer);
-      if (typeof session.subscription !== 'string' || !customerId) {
-        console.error('Completed subscription checkout is missing its subscription or customer id.');
-        return NextResponse.json({ error: 'Incomplete subscription event.' }, { status: 500 });
-      }
-
-      let subscription: Stripe.Subscription;
-      try {
-        subscription = await stripe.subscriptions.retrieve(session.subscription);
-      } catch (error) {
-        console.error('Failed to retrieve subscription after checkout:', error);
-        return NextResponse.json({ error: 'Unable to verify subscription.' }, { status: 500 });
-      }
-      const priceId = subscription.items?.data?.[0]?.price?.id ?? null;
-      const expectedPriceId = process.env.STRIPE_PRO_PRICE_ID;
-      const metadataUserId = subscription.metadata?.supabase_user_id;
-      if (!expectedPriceId) {
-        return NextResponse.json({ error: 'Pro billing is not configured.' }, { status: 503 });
-      }
-      if (metadataUserId !== session.client_reference_id) {
-        console.error('Subscription metadata does not match its Checkout session user.');
-        return NextResponse.json({ error: 'Unexpected subscription owner.' }, { status: 500 });
-      }
-      if (priceId !== expectedPriceId) {
-        console.error('Subscription checkout price does not match STRIPE_PRO_PRICE_ID.');
-      }
-
-      const stored = await upsertRow(
-        'profiles',
-        {
-          id: session.client_reference_id,
-          stripe_customer_id: customerId,
-          stripe_subscription_id: subscription.id,
-          subscription_status: subscription.status,
-          price_id: priceId,
-          current_period_end: getPeriodEnd(subscription),
-          stripe_event_created_at: event.created,
-          updated_at: new Date().toISOString(),
-        },
-        'id'
-      );
-      if (!stored.ok) {
-        console.error('Failed to upsert profile after checkout, status:', stored.status);
-        return NextResponse.json({ error: 'Failed to record event.' }, { status: 500 });
-      }
+    const outcome = await processEvent(stripe, event);
+    await markEvent(event.id, outcome);
+    return NextResponse.json({ received: true });
+  } catch (error) {
+    const message = safeErrorMessage(error);
+    try {
+      await markEvent(event.id, 'failed', message);
+    } catch (markError) {
+      console.error('Unable to record Stripe webhook failure:', event.id, safeErrorMessage(markError));
     }
+    console.error('Stripe webhook processing failed:', event.id, event.type, message);
+    // A non-2xx response asks Stripe to retry. Every mutation above is
+    // idempotent, so a failure after the business write remains safe to replay.
+    return NextResponse.json({ error: 'Failed to process Stripe event.' }, { status: 500 });
   }
-
-  if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
-    const subscription = event.data.object;
-    const customerId = getCustomerId(subscription.customer);
-    const priceId = subscription.items?.data?.[0]?.price?.id ?? null;
-    if (customerId) {
-      const status = event.type === 'customer.subscription.deleted' ? 'canceled' : subscription.status;
-      const orderingOperator = event.type === 'customer.subscription.deleted' ? 'lte' : 'lt';
-      const stored = await patchRows(
-        'profiles',
-        { stripe_subscription_id: subscription.id },
-        {
-          stripe_customer_id: customerId,
-          subscription_status: status,
-          price_id: priceId,
-          current_period_end: getPeriodEnd(subscription),
-          stripe_event_created_at: event.created,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          or: `(stripe_event_created_at.is.null,stripe_event_created_at.${orderingOperator}.${event.created})`,
-        },
-      );
-      if (!stored.ok) {
-        console.error('Failed to sync subscription, status:', stored.status);
-        return NextResponse.json({ error: 'Failed to record event.' }, { status: 500 });
-      }
-    }
-  }
-
-  return NextResponse.json({ received: true });
 }

@@ -4,21 +4,21 @@ export const advancedCalculators: CalculatorConfig[] = [
   {
     meta: {
       slug: "equation-solver-calculator",
-      title: "Equation Solver – Quadratic, Cubic, Trig, and General Roots",
-      shortTitle: "Equation Solver",
+      title: "Quadratic Equation Solver – Real and Complex Roots",
+      shortTitle: "Quadratic Solver",
       description:
-        "Solve equations with step-by-step working. Supports quadratics with discriminant analysis, cubics, trigonometric equations, exponentials, and general solve(f(x)=0, x).",
+        "Solve expanded quadratic equations in x with discriminant analysis, numerically stable real roots, complex roots, and step-by-step working.",
       category: "mathematics",
       icon: "fx=0",
-      keywords: ["equation solver", "quadratic formula", "roots", "solve for x", "polynomial"],
+      keywords: ["quadratic equation solver", "quadratic formula", "roots", "solve for x", "polynomial"],
       popular: true,
       new: true,
     },
     formula: "ax² + bx + c = 0  →  x = (−b ± √(b² − 4ac)) / 2a",
     formulaExplanation:
-      "The solver detects equation type automatically. Quadratics show discriminant and root steps. General equations use symbolic root finding with clear solution listing.",
+      "The solver parses an expanded quadratic, moves both sides into standard form, evaluates the discriminant, and returns its real or complex roots. It rejects higher-order and non-polynomial expressions rather than approximating them as quadratics.",
     exampleUsage:
-      "x² − 5x + 6 = 0 gives x₁ = 3 and x₂ = 2. Cubic and trigonometric equations can also be entered directly.",
+      "x² − 5x + 6 = 0 gives x₁ = 3 and x₂ = 2, with the discriminant and quadratic-formula steps shown.",
     faqs: [
       {
         question: "Can it show the working?",

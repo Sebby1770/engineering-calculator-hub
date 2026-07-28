@@ -8,7 +8,7 @@ real customer data or money.
 Report vulnerabilities privately through [GitHub Security Advisories](https://github.com/Sebby1770/engineering-calculator-hub/security/advisories/new).
 Do not put credentials, customer data, or an unpatched vulnerability in a public issue.
 
-Last reviewed: 2026-07-15
+Last reviewed: 2026-07-28
 
 ## Security boundaries
 
@@ -55,32 +55,44 @@ Last reviewed: 2026-07-15
 - Stripe webhook signatures are verified against the unmodified request body.
 - Webhooks fail closed when persistence or subscription verification is unavailable, allowing
   Stripe to retry instead of silently losing an entitlement.
-- Completed subscriptions are retrieved from Stripe before access is recorded. An unexpected
-  price never grants Pro.
-- Entitlements are bound to the exact Stripe subscription ID, and newer event timestamps prevent
-  a delayed update from overwriting a later cancellation.
+- Every verified webhook is first recorded in a service-role-only inbox keyed by Stripe event ID;
+  duplicate deliveries are idempotent and failed processing remains retryable.
+- Subscription events retrieve current Stripe subscription/customer state instead of trusting
+  webhook delivery order. Profile writes must return exactly one verified row before an event is
+  marked processed, and cancellation-at-period-end state is persisted for accurate account copy.
+- An unexpected price never grants Pro.
 - One-off payment events are idempotent through a unique Stripe Checkout session ID.
-- Existing active subscribers cannot accidentally create a second Pro subscription from the app.
+- Checkout verifies that the configured recurring price matches the advertised US$9 monthly
+  contract, reuses an existing open upgrade session, and blocks any non-terminal Pro subscription.
+- Concurrent upgrade attempts share a stable billing-generation idempotency key. Multiple active
+  Pro subscriptions are treated as a manual billing incident rather than silently selecting one.
 
 ### Supabase/Postgres
 
 The migrations in `supabase/migrations/` version all commercial tables:
 
 - `profiles` — server-managed account and Stripe entitlement state
+- `stripe_events` — verified webhook inbox and processing status, without full event payloads
 - `workspace_documents` — one validated cloud document per Pro user
 - `donations` — idempotent one-off Stripe payment records
 - `feedback` — validated product feedback and optional reply address
 
-All four tables have RLS enabled and forced, with client grants revoked and no browser policies.
+All five tables have RLS enabled and forced, with client grants revoked and no browser policies.
 Only the server-side service role receives explicit table privileges. Constraints cover supported
 subscription states, text lengths, currency shape, and non-negative payment amounts. Frequently
 filtered and retention/audit columns are indexed. A locked `SECURITY DEFINER` trigger creates the
 private profile row when Supabase Auth creates a user.
 
+After applying a migration that creates a public table, verify its Data API exposure in Supabase.
+Newer project defaults may not expose new tables automatically. `stripe_events` must be reachable
+by the server-side service role but must keep RLS forced and all `anon`/`authenticated` grants
+revoked.
+
 ## CI and dependency safety
 
 - Pull requests and pushes to `main` run tests, lint, type checking, a production build, and
-  `npm audit --audit-level=high` in GitHub Actions.
+  `npm audit --omit=dev --audit-level=high` in GitHub Actions. Dependabot continues to scan the
+  complete lockfile, including development tooling.
 - Dependabot checks npm and GitHub Actions weekly.
 - The repository ignores local environment files, build output, Vercel link metadata, and local
   database CLI state. Review staged files before every commit anyway.
@@ -132,7 +144,7 @@ same-origin controls, and Stripe must reach the webhook without a custom header.
 
 ```bash
 npm run verify
-npm audit --audit-level=high
+npm audit --omit=dev --audit-level=high
 npm run start
 curl -I http://localhost:3000
 ```

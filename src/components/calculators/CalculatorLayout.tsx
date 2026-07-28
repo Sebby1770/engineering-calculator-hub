@@ -11,14 +11,16 @@ import FavoriteButton from '@/components/ui/FavoriteButton';
 import CalculatorCard from '@/components/ui/CalculatorCard';
 import SaveToWorkspaceButton from '@/components/workspace/SaveToWorkspaceButton';
 import { AdBanner, AdSidebar, AdInContent, AdBetweenCards } from '@/components/ads';
+import type { CalculatorCapture } from '@/lib/workspace';
 
 interface CalculatorLayoutProps {
   config: CalculatorConfig;
   result?: string;
+  evidence?: CalculatorCapture;
   children: ReactNode;
 }
 
-export default function CalculatorLayout({ config, result, children }: CalculatorLayoutProps) {
+export default function CalculatorLayout({ config, result, evidence, children }: CalculatorLayoutProps) {
   const { meta, formula, formulaExplanation, exampleUsage, faqs, relatedSlugs } = config;
   const related = getRelatedCalculators(relatedSlugs);
   const cat = categories.find((c) => c.id === meta.category);
@@ -75,6 +77,7 @@ export default function CalculatorLayout({ config, result, children }: Calculato
                   calculatorTitle={meta.shortTitle}
                   formula={formula}
                   result={result}
+                  evidence={evidence}
                 />
               </div>
             )}

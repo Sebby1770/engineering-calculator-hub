@@ -11,7 +11,7 @@ import 'server-only';
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-type TableName = 'donations' | 'feedback' | 'profiles' | 'workspace_documents';
+type TableName = 'donations' | 'feedback' | 'profiles' | 'stripe_events' | 'workspace_documents';
 
 export function isSupabaseConfigured() {
   return Boolean(SUPABASE_URL && SERVICE_ROLE_KEY);
@@ -20,6 +20,10 @@ export function isSupabaseConfigured() {
 export interface DbResult {
   ok: boolean;
   status: number;
+}
+
+export interface DbRowsResult<T> extends DbResult {
+  rows: T[];
 }
 
 async function restRequest(
@@ -72,6 +76,22 @@ export async function insertRow(
   return { ok, status };
 }
 
+// Insert and return the affected row. With onConflict, an ignored duplicate
+// returns an empty rows array so callers can load the durable existing record.
+export async function insertRowReturning<T = Record<string, unknown>>(
+  table: TableName,
+  row: Record<string, unknown>,
+  options?: { onConflict?: string }
+): Promise<DbRowsResult<T>> {
+  const params: Record<string, string> = {};
+  if (options?.onConflict) params.on_conflict = options.onConflict;
+  const prefer = options?.onConflict
+    ? 'return=representation,resolution=ignore-duplicates'
+    : 'return=representation';
+  const { ok, status, json } = await restRequest('POST', table, params, row, prefer);
+  return { ok, status, rows: ok && Array.isArray(json) ? (json as T[]) : [] };
+}
+
 // Insert-or-update keyed on a unique column.
 export async function upsertRow(
   table: TableName,
@@ -88,6 +108,21 @@ export async function upsertRow(
   return { ok, status };
 }
 
+export async function upsertRowReturning<T = Record<string, unknown>>(
+  table: TableName,
+  row: Record<string, unknown>,
+  onConflict: string
+): Promise<DbRowsResult<T>> {
+  const { ok, status, json } = await restRequest(
+    'POST',
+    table,
+    { on_conflict: onConflict },
+    row,
+    'return=representation,resolution=merge-duplicates'
+  );
+  return { ok, status, rows: ok && Array.isArray(json) ? (json as T[]) : [] };
+}
+
 // Update rows matching simple equality filters, e.g. { id: userId }.
 export async function patchRows(
   table: TableName,
@@ -101,6 +136,28 @@ export async function patchRows(
   }
   const { ok, status } = await restRequest('PATCH', table, params, values, 'return=minimal');
   return { ok, status };
+}
+
+// Use this for state transitions where HTTP success is insufficient: PostgREST
+// can return 204 even when an UPDATE matched zero rows.
+export async function patchRowsReturning<T = Record<string, unknown>>(
+  table: TableName,
+  match: Record<string, string>,
+  values: Record<string, unknown>,
+  filters: Record<string, string> = {},
+): Promise<DbRowsResult<T>> {
+  const params: Record<string, string> = { ...filters };
+  for (const [column, value] of Object.entries(match)) {
+    params[column] = `eq.${value}`;
+  }
+  const { ok, status, json } = await restRequest(
+    'PATCH',
+    table,
+    params,
+    values,
+    'return=representation',
+  );
+  return { ok, status, rows: ok && Array.isArray(json) ? (json as T[]) : [] };
 }
 
 // Read rows matching simple equality filters. Returns null on failure.

@@ -180,8 +180,17 @@ export function solveTriangle(
 
   if (!Number.isFinite(sideC) || sideC <= 0) return null;
 
-  const angleA = Math.asin((sideA * Math.sin(angleC)) / sideC);
+  // The sine rule is ambiguous here: asin always returns its acute branch,
+  // even when the angle opposite side A is obtuse. The cosine rule uniquely
+  // determines the SAS triangle and therefore preserves that obtuse branch.
+  const cosineA =
+    (sideB * sideB + sideC * sideC - sideA * sideA) / (2 * sideB * sideC);
+  const angleA = Math.acos(Math.max(-1, Math.min(1, cosineA)));
   const angleB = Math.PI - angleA - angleC;
+
+  if (!Number.isFinite(angleA) || !Number.isFinite(angleB) || angleB <= 0) {
+    return null;
+  }
 
   return {
     sideC,
@@ -191,20 +200,51 @@ export function solveTriangle(
   };
 }
 
-function richardsonExtrapolate(values: number[]): number | null {
+function richardsonExtrapolate(values: number[], stepRatio = 10): number | null {
   if (values.length < 2) return null;
 
   let sequence = [...values];
+  let level = 1;
   while (sequence.length > 1) {
     const next: number[] = [];
+    const factor = stepRatio ** level;
     for (let i = 0; i < sequence.length - 1; i += 1) {
-      const factor = 2 ** (i + 1);
       next.push((factor * sequence[i + 1] - sequence[i]) / (factor - 1));
     }
     sequence = next;
+    level += 1;
   }
 
   return Number.isFinite(sequence[0]) ? sequence[0] : null;
+}
+
+function estimateOneSidedLimit(samples: number[]): number | null {
+  if (samples.length < 4) return null;
+
+  const tail = samples.slice(-4);
+  const deltas = tail.slice(1).map((value, index) => Math.abs(value - tail[index]));
+  const scale = Math.max(1, ...tail.map((value) => Math.abs(value)));
+  const lastDelta = deltas[deltas.length - 1];
+
+  // A finite limit should either have reached numerical stability or show a
+  // consistently contracting tail. This rejects poles such as 1/x and slow
+  // unbounded trends such as log(x), instead of reporting a large finite value.
+  const stable = lastDelta <= 1e-7 * scale;
+  const contracting =
+    deltas[0] > 0 &&
+    deltas[1] <= deltas[0] * 0.8 &&
+    deltas[2] <= deltas[1] * 0.8;
+  if (!stable && !contracting) return null;
+
+  const extrapolated = richardsonExtrapolate(samples);
+  if (extrapolated === null) return tail[tail.length - 1];
+
+  // If extrapolation is unstable, the closest raw sample is the more honest
+  // estimate. At the final offset it is already very near a convergent limit.
+  const last = tail[tail.length - 1];
+  const extrapolationScale = Math.max(1, Math.abs(last), Math.abs(extrapolated));
+  const permittedGap = Math.max(1e-6 * extrapolationScale, lastDelta * 20);
+  return Math.abs(extrapolated - last) <= permittedGap ? extrapolated : last;
 }
 
 export function numericalLimit(
@@ -215,7 +255,6 @@ export function numericalLimit(
   const offsets = [1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8];
   const rightSamples: number[] = [];
   const leftSamples: number[] = [];
-  const centralSamples: number[] = [];
 
   for (const step of offsets) {
     if (direction === "both" || direction === "right") {
@@ -226,23 +265,21 @@ export function numericalLimit(
       const value = evaluate(point - step);
       if (Number.isFinite(value)) leftSamples.push(value);
     }
-    if (direction === "both" && rightSamples.length > 0 && leftSamples.length > 0) {
-      const right = evaluate(point + step);
-      const left = evaluate(point - step);
-      if (Number.isFinite(right) && Number.isFinite(left)) {
-        centralSamples.push((right + left) / 2);
-      }
-    }
   }
 
-  const candidates = [
-    richardsonExtrapolate(centralSamples),
-    richardsonExtrapolate(rightSamples),
-    richardsonExtrapolate(leftSamples),
-  ].filter((value): value is number => value !== null);
+  if (direction === "right") return estimateOneSidedLimit(rightSamples);
+  if (direction === "left") return estimateOneSidedLimit(leftSamples);
 
-  if (candidates.length === 0) return null;
-  return candidates[0];
+  const rightLimit = estimateOneSidedLimit(rightSamples);
+  const leftLimit = estimateOneSidedLimit(leftSamples);
+  if (rightLimit === null || leftLimit === null) return null;
+
+  const agreementScale = Math.max(1, Math.abs(rightLimit), Math.abs(leftLimit));
+  if (Math.abs(rightLimit - leftLimit) > 1e-5 * agreementScale) {
+    return null;
+  }
+
+  return (rightLimit + leftLimit) / 2;
 }
 
 export function simpsonIntegral(

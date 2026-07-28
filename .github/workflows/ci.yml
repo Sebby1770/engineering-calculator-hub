@@ -33,4 +33,4 @@ jobs:
         run: npm run verify
 
       - name: Audit production dependency tree
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high

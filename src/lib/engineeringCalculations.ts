@@ -386,3 +386,253 @@ export function calculateRcLowPass(input: { resistanceKohm: number; capacitanceN
     warning: 'Assumes an ideal source, ideal components, and negligible load. Include source resistance, load impedance, tolerances, and parasitics in a real design.',
   };
 }
+
+export function calculateRegulatorThermal(input: {
+  topologyCode: number;
+  inputVoltage: number;
+  outputVoltage: number;
+  outputCurrentA: number;
+  buckEfficiencyPercent: number;
+  ambientTemperatureC: number;
+  thetaJaCPerW: number;
+  maxJunctionTemperatureC: number;
+}): EngineeringResult {
+  requirePositive({
+    inputVoltage: input.inputVoltage,
+    outputVoltage: input.outputVoltage,
+    outputCurrentA: input.outputCurrentA,
+    thetaJaCPerW: input.thetaJaCPerW,
+  });
+  requireFinite({
+    topologyCode: input.topologyCode,
+    buckEfficiencyPercent: input.buckEfficiencyPercent,
+    ambientTemperatureC: input.ambientTemperatureC,
+    maxJunctionTemperatureC: input.maxJunctionTemperatureC,
+  });
+  if (input.topologyCode !== 0 && input.topologyCode !== 1) {
+    throw new Error('Choose LDO or buck as the regulator topology.');
+  }
+  if (input.outputVoltage >= input.inputVoltage) {
+    throw new Error('Input voltage must be greater than output voltage for this LDO/buck model.');
+  }
+  if (input.maxJunctionTemperatureC <= input.ambientTemperatureC) {
+    throw new Error('Maximum junction temperature must exceed ambient temperature.');
+  }
+  if (input.topologyCode === 1 && (input.buckEfficiencyPercent <= 0 || input.buckEfficiencyPercent >= 100)) {
+    throw new Error('Buck efficiency must be greater than 0% and less than 100%.');
+  }
+
+  const isLdo = input.topologyCode === 0;
+  const topology = isLdo ? 'LDO' : 'Buck';
+  const outputPower = input.outputVoltage * input.outputCurrentA;
+  const inputPower = isLdo
+    ? input.inputVoltage * input.outputCurrentA
+    : outputPower / (input.buckEfficiencyPercent / 100);
+  const powerLoss = inputPower - outputPower;
+  const efficiencyPercent = (outputPower / inputPower) * 100;
+  const temperatureRise = powerLoss * input.thetaJaCPerW;
+  const estimatedJunction = input.ambientTemperatureC + temperatureRise;
+  const thermalMargin = input.maxJunctionTemperatureC - estimatedJunction;
+  const requiredThetaJa = (input.maxJunctionTemperatureC - input.ambientTemperatureC) / powerLoss;
+  const thermallyWithinLimit = thermalMargin >= 0;
+
+  return {
+    summary: `${topology} loss is approximately ${formatEngineering(powerLoss)} W and estimated junction temperature is ${formatEngineering(estimatedJunction)}°C, leaving ${formatEngineering(thermalMargin)}°C thermal margin.`,
+    outputs: [
+      { label: 'Estimated regulator loss', value: formatEngineering(powerLoss), unit: 'W', emphasis: true },
+      { label: 'Estimated efficiency', value: formatEngineering(efficiencyPercent), unit: '%' },
+      { label: 'Estimated junction', value: formatEngineering(estimatedJunction), unit: '°C' },
+      { label: 'Thermal margin', value: formatEngineering(thermalMargin), unit: '°C' },
+      { label: 'Maximum allowable θJA', value: formatEngineering(requiredThetaJa), unit: '°C/W' },
+      { label: 'Input power', value: formatEngineering(inputPower), unit: 'W' },
+      { label: 'Nominal thermal check', value: thermallyWithinLimit ? 'Pass' : 'Over limit' },
+    ],
+    steps: [
+      { label: 'Output power', value: `Pout = Vout × Iout = ${formatEngineering(outputPower)} W` },
+      { label: `${topology} input model`, value: isLdo ? `Pin ≈ Vin × Iout = ${formatEngineering(inputPower)} W` : `Pin = Pout/η = ${formatEngineering(inputPower)} W` },
+      { label: 'Regulator loss', value: `Ploss = Pin − Pout = ${formatEngineering(powerLoss)} W` },
+      { label: 'Junction estimate', value: `TJ = TA + Ploss × θJA = ${formatEngineering(estimatedJunction)}°C` },
+      { label: 'Thermal requirement', value: `θJA ≤ (TJmax − TA)/Ploss = ${formatEngineering(requiredThetaJa)}°C/W` },
+    ],
+    warning: `${thermallyWithinLimit ? 'The nominal thermal estimate is within the entered limit.' : 'The nominal estimate exceeds the entered junction-temperature limit.'} Check worst-case input voltage, load, quiescent current, dropout, switching losses, copper area, airflow, enclosure temperature, transient response, and the regulator datasheet.`,
+  };
+}
+
+export function calculateDcWireDrop(input: {
+  materialCode: number;
+  oneWayLengthM: number;
+  conductorAreaMm2: number;
+  currentA: number;
+  systemVoltage: number;
+  conductorTemperatureC: number;
+  maxDropPercent: number;
+}): EngineeringResult {
+  requirePositive({
+    oneWayLengthM: input.oneWayLengthM,
+    conductorAreaMm2: input.conductorAreaMm2,
+    currentA: input.currentA,
+    systemVoltage: input.systemVoltage,
+  });
+  requireFinite({
+    materialCode: input.materialCode,
+    conductorTemperatureC: input.conductorTemperatureC,
+    maxDropPercent: input.maxDropPercent,
+  });
+  if (input.materialCode !== 0 && input.materialCode !== 1) {
+    throw new Error('Choose copper or aluminium as the conductor material.');
+  }
+  if (input.conductorTemperatureC < -50 || input.conductorTemperatureC > 200) {
+    throw new Error('Conductor temperature must be between −50°C and 200°C.');
+  }
+  if (input.maxDropPercent <= 0 || input.maxDropPercent >= 100) {
+    throw new Error('Maximum voltage drop must be greater than 0% and less than 100%.');
+  }
+
+  const material = input.materialCode === 0
+    ? { name: 'Copper', resistivity20: 1.724e-8, temperatureCoefficient: 0.00393 }
+    : { name: 'Aluminium', resistivity20: 2.826e-8, temperatureCoefficient: 0.00403 };
+  const temperatureFactor = 1 + material.temperatureCoefficient * (input.conductorTemperatureC - 20);
+  const resistivity = material.resistivity20 * temperatureFactor;
+  const roundTripLengthM = input.oneWayLengthM * 2;
+  const areaM2 = input.conductorAreaMm2 / 1_000_000;
+  const resistance = (resistivity * roundTripLengthM) / areaM2;
+  const voltageDrop = input.currentA * resistance;
+  const dropPercent = (voltageDrop / input.systemVoltage) * 100;
+  const deliveredVoltage = input.systemVoltage - voltageDrop;
+  const powerLoss = input.currentA ** 2 * resistance;
+  const allowedDropV = input.systemVoltage * (input.maxDropPercent / 100);
+  const minimumAreaMm2 = ((resistivity * roundTripLengthM * input.currentA) / allowedDropV) * 1_000_000;
+  const meetsTarget = voltageDrop <= allowedDropV;
+
+  return {
+    summary: `${material.name} ${formatEngineering(input.conductorAreaMm2)} mm² over ${formatEngineering(input.oneWayLengthM)} m one-way drops ${formatEngineering(voltageDrop)} V (${formatEngineering(dropPercent)}%); ${meetsTarget ? 'the entered area meets' : 'the entered area exceeds'} the ${formatEngineering(input.maxDropPercent)}% drop target.`,
+    outputs: [
+      { label: 'Round-trip resistance', value: formatEngineering(resistance), unit: 'Ω' },
+      { label: 'Voltage drop', value: formatEngineering(voltageDrop), unit: 'V', emphasis: true },
+      { label: 'Voltage drop percent', value: formatEngineering(dropPercent), unit: '%' },
+      { label: 'Delivered voltage', value: formatEngineering(deliveredVoltage), unit: 'V' },
+      { label: 'Cable power loss', value: formatEngineering(powerLoss), unit: 'W' },
+      { label: 'Minimum area for target', value: formatEngineering(minimumAreaMm2), unit: 'mm²' },
+      { label: 'Drop target', value: meetsTarget ? 'Pass' : 'Review' },
+    ],
+    steps: [
+      { label: 'Temperature compensation', value: `ρ${formatEngineering(input.conductorTemperatureC)} = ρ20 × [1 + α(T−20)] = ${formatEngineering(resistivity)} Ω·m` },
+      { label: 'Round-trip path', value: `2 × ${formatEngineering(input.oneWayLengthM)} m = ${formatEngineering(roundTripLengthM)} m` },
+      { label: 'Loop resistance', value: `R = ρL/A = ${formatEngineering(resistance)} Ω` },
+      { label: 'Actual drop', value: `Vdrop = IR = ${formatEngineering(input.currentA)} A × ${formatEngineering(resistance)} Ω = ${formatEngineering(voltageDrop)} V` },
+      { label: 'Minimum cross-section', value: `Amin = ρLI/Vallowed = ${formatEngineering(minimumAreaMm2)} mm² for ${formatEngineering(allowedDropV)} V maximum drop` },
+    ],
+    warning: 'This is a DC resistance and voltage-drop model, not an ampacity, protection, or code-compliance result. Verify insulation temperature, installation method, terminations, fault protection, conductor standards, and any applicable wiring rules separately.',
+  };
+}
+
+export function calculateOpAmpGain(input: {
+  modeCode: number;
+  inputPeakVoltage: number;
+  referenceVoltage: number;
+  inputResistanceKohm: number;
+  feedbackResistanceKohm: number;
+  supplyLowVoltage: number;
+  supplyHighVoltage: number;
+  commonModeLowVoltage: number;
+  commonModeHighVoltage: number;
+  outputSwingLowVoltage: number;
+  outputSwingHighVoltage: number;
+  gainBandwidthMhz: number;
+  signalFrequencyKhz: number;
+  slewRateVPerUs: number;
+}): EngineeringResult {
+  requirePositive({
+    inputPeakVoltage: input.inputPeakVoltage,
+    inputResistanceKohm: input.inputResistanceKohm,
+    feedbackResistanceKohm: input.feedbackResistanceKohm,
+    gainBandwidthMhz: input.gainBandwidthMhz,
+    signalFrequencyKhz: input.signalFrequencyKhz,
+    slewRateVPerUs: input.slewRateVPerUs,
+  });
+  requireFinite({
+    modeCode: input.modeCode,
+    referenceVoltage: input.referenceVoltage,
+    supplyLowVoltage: input.supplyLowVoltage,
+    supplyHighVoltage: input.supplyHighVoltage,
+    commonModeLowVoltage: input.commonModeLowVoltage,
+    commonModeHighVoltage: input.commonModeHighVoltage,
+    outputSwingLowVoltage: input.outputSwingLowVoltage,
+    outputSwingHighVoltage: input.outputSwingHighVoltage,
+  });
+  if (input.modeCode !== 0 && input.modeCode !== 1) {
+    throw new Error('Choose non-inverting or inverting op-amp mode.');
+  }
+  if (input.supplyHighVoltage <= input.supplyLowVoltage) {
+    throw new Error('The high supply rail must exceed the low supply rail.');
+  }
+  if (input.referenceVoltage < input.supplyLowVoltage || input.referenceVoltage > input.supplyHighVoltage) {
+    throw new Error('Reference voltage must lie between the supply rails.');
+  }
+  if (input.commonModeHighVoltage <= input.commonModeLowVoltage
+    || input.commonModeLowVoltage < input.supplyLowVoltage
+    || input.commonModeHighVoltage > input.supplyHighVoltage) {
+    throw new Error('The input common-mode range must be ordered and lie within the supply rails.');
+  }
+  if (input.outputSwingHighVoltage <= input.outputSwingLowVoltage
+    || input.outputSwingLowVoltage < input.supplyLowVoltage
+    || input.outputSwingHighVoltage > input.supplyHighVoltage) {
+    throw new Error('The output swing range must be ordered and lie within the supply rails.');
+  }
+
+  const isNonInverting = input.modeCode === 0;
+  const resistanceRatio = input.feedbackResistanceKohm / input.inputResistanceKohm;
+  const signalGain = isNonInverting ? 1 + resistanceRatio : -resistanceRatio;
+  const noiseGain = 1 + resistanceRatio;
+  const outputPeakVoltage = Math.abs(signalGain) * input.inputPeakVoltage;
+  const outputLowVoltage = input.referenceVoltage - outputPeakVoltage;
+  const outputHighVoltage = input.referenceVoltage + outputPeakVoltage;
+  const estimatedBandwidthHz = (input.gainBandwidthMhz * 1_000_000) / noiseGain;
+  const signalFrequencyHz = input.signalFrequencyKhz * 1_000;
+  const requiredSlewRate = (2 * Math.PI * signalFrequencyHz * outputPeakVoltage) / 1_000_000;
+  const commonModeLow = isNonInverting
+    ? input.referenceVoltage - input.inputPeakVoltage
+    : input.referenceVoltage;
+  const commonModeHigh = isNonInverting
+    ? input.referenceVoltage + input.inputPeakVoltage
+    : input.referenceVoltage;
+  const commonModeInRange = commonModeLow >= input.commonModeLowVoltage
+    && commonModeHigh <= input.commonModeHighVoltage;
+  const outputInRange = outputLowVoltage >= input.outputSwingLowVoltage
+    && outputHighVoltage <= input.outputSwingHighVoltage;
+  const bandwidthInRange = signalFrequencyHz <= estimatedBandwidthHz;
+  const slewInRange = input.slewRateVPerUs >= requiredSlewRate;
+  const outputHeadroom = Math.min(
+    outputLowVoltage - input.outputSwingLowVoltage,
+    input.outputSwingHighVoltage - outputHighVoltage,
+  );
+  const checks = [
+    commonModeInRange ? null : `The estimated input common-mode swing (${formatEngineering(commonModeLow)} to ${formatEngineering(commonModeHigh)} V) is outside the entered range.`,
+    outputInRange ? null : `The ideal output swing (${formatEngineering(outputLowVoltage)} to ${formatEngineering(outputHighVoltage)} V) is outside the entered output-swing range.`,
+    bandwidthInRange ? null : `Signal frequency exceeds the ${formatEngineering(estimatedBandwidthHz / 1_000)} kHz closed-loop bandwidth estimate.`,
+    slewInRange ? null : `Required slew rate (${formatEngineering(requiredSlewRate)} V/µs) exceeds the entered device capability.`,
+  ].filter((message): message is string => message !== null);
+  const allChecksPass = checks.length === 0;
+
+  return {
+    summary: `${isNonInverting ? 'Non-inverting' : 'Inverting'} gain is ${formatEngineering(signalGain)} V/V, giving ${formatEngineering(outputPeakVoltage)} V peak output (${formatEngineering(outputLowVoltage)} to ${formatEngineering(outputHighVoltage)} V); ${allChecksPass ? 'the nominal range, bandwidth, and slew checks pass' : `${checks.length} nominal check${checks.length === 1 ? '' : 's'} need review`}.`,
+    outputs: [
+      { label: 'Ideal signal gain', value: formatEngineering(signalGain), unit: 'V/V', emphasis: true },
+      { label: 'Ideal output peak', value: formatEngineering(outputPeakVoltage), unit: 'V' },
+      { label: 'Ideal output range', value: `${formatEngineering(outputLowVoltage)} to ${formatEngineering(outputHighVoltage)}`, unit: 'V' },
+      { label: 'Noise gain', value: formatEngineering(noiseGain), unit: 'V/V' },
+      { label: 'Estimated bandwidth', value: formatEngineering(estimatedBandwidthHz / 1_000), unit: 'kHz' },
+      { label: 'Minimum sine-wave slew rate', value: formatEngineering(requiredSlewRate), unit: 'V/µs' },
+      { label: 'Output headroom', value: formatEngineering(outputHeadroom), unit: 'V' },
+      { label: 'Nominal checks', value: allChecksPass ? 'Pass' : `${checks.length} warning${checks.length === 1 ? '' : 's'}` },
+    ],
+    steps: [
+      { label: 'Signal gain', value: isNonInverting ? `Av = 1 + Rf/Rg = ${formatEngineering(signalGain)} V/V` : `Av = −Rf/Rin = ${formatEngineering(signalGain)} V/V` },
+      { label: 'Ideal output swing', value: `Vout,peak = |Av| × Vin,peak = ${formatEngineering(outputPeakVoltage)} V; range = ${formatEngineering(outputLowVoltage)} to ${formatEngineering(outputHighVoltage)} V` },
+      { label: 'Noise gain and bandwidth', value: `NG = 1 + Rf/Rin = ${formatEngineering(noiseGain)}; BW ≈ GBW/NG = ${formatEngineering(estimatedBandwidthHz / 1_000)} kHz` },
+      { label: 'Slew-rate requirement', value: `SRmin = 2πfVpeak = ${formatEngineering(requiredSlewRate)} V/µs` },
+      { label: 'Range checks', value: `Input common mode: ${commonModeInRange ? 'within range' : 'outside range'}; output swing: ${outputInRange ? 'within range' : 'outside range'}` },
+    ],
+    warning: `${checks.length > 0 ? checks.join(' ') : 'The entered nominal operating point passes these first-order checks.'} Verify input bias and offset error, noise, stability, capacitive loading, output current, distortion, resistor tolerances, and all datasheet limits across operating conditions. The slew check treats the calculated output excursion as a sine-wave peak.`,
+  };
+}

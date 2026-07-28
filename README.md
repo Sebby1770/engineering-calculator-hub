@@ -1,6 +1,6 @@
 # Engineering Calculator Hub
 
-A commercial-ready engineering calculation workspace built with Next.js. Version 2.0 includes 41 deterministic calculators across 8 categories, a local-first project notebook, calculation-sheet exports, secure Pro cloud-sync architecture, Stripe subscriptions, and a smart math engine that shows its work.
+A commercial-ready engineering calculation workspace built with Next.js. Version 2.1 includes 44 deterministic calculators across 8 categories, a reproducible local-first project workspace, review-ready evidence exports, secure Pro cloud-sync architecture, Stripe subscriptions, and a smart math engine that shows its work.
 
 The product strategy is deliberately simple: core formulas remain free and indexable; Pro monetizes the workflow around them through cloud backup, device-to-device recovery, and workflow convenience.
 
@@ -14,22 +14,25 @@ The product strategy is deliberately simple: core formulas remain free and index
 
 ## Features
 
-### Calculators (41 included)
+### Calculators (44 included)
 
-- **Electrical**: Ohm's Law (with steps), tolerance-aware E24 Voltage Divider Designer, Resistor Color Code, RC Time Constant, Power, Parallel/Series Resistors, LED Resistor Designer, PCB Trace Drop, Three-Phase Power, Battery Runtime
+- **Electrical**: Ohm's Law (with steps), tolerance-aware E24 Voltage Divider Designer, Resistor Color Code, RC Time Constant, Power, Parallel/Series Resistors, LED Resistor Designer, PCB Trace Drop, Three-Phase Power, Battery Runtime, temperature-aware Wire Voltage Drop, and Regulator Thermal Designer
 - **Mathematics**: Universal Calculator (smart mode), Equation Solver, Scientific Calculator, Log Calculator, Binary/Hex/Decimal Converter
 - **Calculus**: Derivative, Integral, Limit, ODE Solver, Taylor Series
 - **Geometry**: Triangle Solver, Circle, Pythagorean Theorem, 3D Volume, Distance
 - **Linear Algebra**: Determinant, Matrix Inverse, Matrix Multiply, Linear System Solver, Dot/Cross Product, Eigenvalues
 - **Physics**: Energy, Frequency, Wavelength
 - **Conversions**: dB↔Voltage, Frequency↔Period
-- **Signals & Systems**: Series RLC Resonance, ADC Resolution, RC Low-Pass Filter Designer
+- **Signals & Systems**: Series RLC Resonance, ADC Resolution, RC Low-Pass Filter Designer, and Op-Amp Gain Checker
 
 ### Engineering Workspace
 
 - Save any calculated result into a named design project
-- Preserve the formula, result, timestamp, assumptions, and project notes
-- Export project sheets as CSV or JSON
+- Preserve structured inputs, outputs, worked steps, warnings, formula version, timestamp, assumptions, and review status
+- Reopen supported professional calculations with the exact captured values
+- Start from guided sensor/ADC, battery, regulator/thermal, and three-phase project packs
+- Duplicate projects, export a full local backup, and safely import projects as copies
+- Export evidence packs as CSV or JSON
 - Print a clean review-ready sheet or save it as PDF
 - Local-first by default: no account is required and calculations stay on the device
 - Optional Pro cloud backup through an authenticated, size-limited server route
@@ -299,6 +302,7 @@ A Supabase project (`engineering-calculator-hub`, region `us-east-1`) backs the 
 - `donations` — written by the Stripe webhook (session ID, amount, currency, status)
 - `feedback` — written by the `/feedback` form (message + optional email)
 - `profiles` — account and Stripe subscription state
+- `stripe_events` — durable, idempotent processing state for verified Stripe webhook deliveries
 - `workspace_documents` — the latest validated Pro cloud-workspace document for each user
 
 Tables have **row-level security enabled with revoked client grants**, so private application data is inaccessible with the public key — access goes through authenticated server API routes using the service-role key.
@@ -308,9 +312,14 @@ The complete commercial schema is versioned in:
 ```text
 supabase/migrations/20260710151234_workspace_documents.sql
 supabase/migrations/20260712114421_commercial_backend_hardening.sql
+supabase/migrations/20260728090000_stripe_event_inbox.sql
 ```
 
-Apply both migrations to the linked project before enabling accounts, billing, feedback, or Pro cloud sync. The second migration versions the account/payment/feedback tables, database constraints, indexes, auth-profile trigger, forced RLS, and least-privilege grants. The browser can only sync through the authenticated, subscription-and-price-checked `/api/workspace` route.
+Apply all migrations to the linked project before enabling accounts, billing, feedback, or Pro cloud sync. The migrations version the account/payment/feedback tables, durable Stripe event inbox, database constraints, indexes, auth-profile trigger, forced RLS, and least-privilege grants. The browser can only sync through the authenticated, subscription-and-price-checked `/api/workspace` route.
+
+Supabase projects using the newer Data API defaults may not expose newly created public tables automatically. After applying the migrations, verify that the server-side service role can access `public.stripe_events` through the Data API. Do not grant `anon` or `authenticated` access; the inbox must remain service-role-only.
+
+Apply `20260728090000_stripe_event_inbox.sql` before deploying the matching application code. The updated webhook and subscription-status route require the new inbox and cancellation columns; deploying code first intentionally fails closed with retryable backend errors.
 
 To connect a deployment:
 
@@ -333,8 +342,8 @@ The SaaS plumbing is built in and switches on with configuration — no code cha
   database trigger creates the `profiles` row; private profile and workspace data are read only
   through server routes after token verification.
 - **Pro subscription**: `/api/billing/subscribe` creates a Stripe Checkout session in
-  `subscription` mode; the webhook keeps `profiles.subscription_status` in sync
-  (`checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`);
+  `subscription` mode; the webhook durably records each event, retrieves current Stripe state,
+  and keeps `profiles.subscription_status` and cancellation state in sync;
   `/api/billing/portal` opens the Stripe Billing Portal for self-serve cancel/upgrade.
 - **Entitlements**: Pro requires an active/trialing subscription on the exact configured
   `STRIPE_PRO_PRICE_ID`; another Stripe product cannot accidentally grant access.
@@ -345,9 +354,13 @@ The SaaS plumbing is built in and switches on with configuration — no code cha
 
 Setup:
 
-1. **Stripe**: create a **recurring** price (the launch page tests "Pro — $9/month") → set `STRIPE_PRO_PRICE_ID`.
-   Add `customer.subscription.updated` and `customer.subscription.deleted` to your webhook
-   endpoint's events (alongside `checkout.session.completed`). Enable the **Billing Portal**
+1. **Stripe**: create an active **US$9 monthly recurring** price → set `STRIPE_PRO_PRICE_ID`.
+   Checkout fails closed if that price's amount, currency, or interval differs from the offer shown
+   on the pricing page, preventing an accidental advertising/checkout mismatch.
+   Add `customer.subscription.created`, `customer.subscription.updated`,
+   `customer.subscription.deleted`, `customer.subscription.paused`, and
+   `customer.subscription.resumed` to your webhook endpoint's events (alongside
+   `checkout.session.completed`). Enable the **Billing Portal**
    (Settings → Billing → Customer portal).
 2. **Supabase Auth**: Dashboard → Authentication → URL Configuration → set the Site URL to your
    production domain and add it (plus `http://localhost:3000`) to Redirect URLs. The default

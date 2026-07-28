@@ -16,10 +16,13 @@ export default function CalcInput({
   value,
   onChange,
   highlight = false,
+  type = 'number',
+  inputMode,
   ...rest
 }: CalcInputProps) {
   const generatedId = useId();
   const inputId = rest.id || generatedId;
+  const resolvedInputMode = inputMode ?? (type === 'number' ? 'decimal' : undefined);
 
   return (
     <div className="group">
@@ -28,9 +31,9 @@ export default function CalcInput({
       </label>
       <div className="relative">
         <input
-          type="number"
+          type={type}
           id={inputId}
-          inputMode="decimal"
+          inputMode={resolvedInputMode}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className={`w-full rounded-lg border px-4 py-3 font-mono text-base transition-all outline-none

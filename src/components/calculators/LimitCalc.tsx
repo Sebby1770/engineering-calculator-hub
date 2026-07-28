@@ -48,7 +48,15 @@ export default function LimitCalc({
         className="w-full rounded-lg border border-surface-300 dark:border-surface-700 bg-white dark:bg-surface-900 px-4 py-3 font-mono text-base text-surface-900 dark:text-white outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-200 dark:focus:ring-brand-800"
       />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-        <CalcInput label="Variable" value={variable} onChange={setVariable} />
+        <CalcInput
+          label="Variable"
+          value={variable}
+          onChange={setVariable}
+          type="text"
+          inputMode="text"
+          autoComplete="off"
+          spellCheck={false}
+        />
         <CalcInput label="Approach point" value={point} onChange={setPoint} />
         <CalcSelect
           label="Direction"
@@ -69,7 +77,7 @@ export default function LimitCalc({
       </button>
       {result && (
         <>
-          <CalcResult value={result} detail="Richardson extrapolation on sampled values near the approach point." />
+          <CalcResult value={result} detail="One-sided convergence and agreement checks on values sampled near the approach point." />
           <WorkSteps steps={steps} />
         </>
       )}
