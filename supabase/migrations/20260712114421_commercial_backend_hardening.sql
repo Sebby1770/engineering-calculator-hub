@@ -52,6 +52,27 @@ alter table public.feedback add column if not exists message text;
 alter table public.feedback add column if not exists email text;
 alter table public.feedback add column if not exists created_at timestamptz default now();
 
+-- Normalize nullable/default differences left by the original prototype schema.
+update public.profiles
+set subscription_status = 'inactive'
+where subscription_status is null;
+update public.profiles set created_at = now() where created_at is null;
+update public.profiles set updated_at = now() where updated_at is null;
+update public.donations set created_at = now() where created_at is null;
+update public.feedback set created_at = now() where created_at is null;
+
+alter table public.profiles alter column subscription_status set default 'inactive';
+alter table public.profiles alter column subscription_status set not null;
+alter table public.profiles alter column created_at set default now();
+alter table public.profiles alter column created_at set not null;
+alter table public.profiles alter column updated_at set default now();
+alter table public.profiles alter column updated_at set not null;
+alter table public.donations alter column amount_total type bigint using amount_total::bigint;
+alter table public.donations alter column created_at set default now();
+alter table public.donations alter column created_at set not null;
+alter table public.feedback alter column created_at set default now();
+alter table public.feedback alter column created_at set not null;
+
 -- Constraints reject malformed server writes before they become durable data.
 do $$
 begin
@@ -157,6 +178,7 @@ $$;
 revoke execute on function private.handle_new_user() from public, anon, authenticated;
 
 drop trigger if exists on_auth_user_created on auth.users;
+drop function if exists public.handle_new_user();
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function private.handle_new_user();
@@ -172,11 +194,27 @@ alter table public.feedback force row level security;
 alter table public.workspace_documents enable row level security;
 alter table public.workspace_documents force row level security;
 
+drop policy if exists "Users can read own profile" on public.profiles;
+
 revoke all on table public.profiles, public.donations, public.feedback, public.workspace_documents
-  from anon, authenticated;
+  from public, anon, authenticated, service_role;
 grant select, insert, update, delete
   on table public.profiles, public.donations, public.feedback, public.workspace_documents
   to service_role;
+
+-- Fresh installations use identity columns; restored prototypes used UUIDs.
+-- Grant sequence access only when the identity sequences exist.
+do $$
+begin
+  if to_regclass('public.donations_id_seq') is not null then
+    execute 'revoke all on sequence public.donations_id_seq from public, anon, authenticated, service_role';
+    execute 'grant usage, select on sequence public.donations_id_seq to service_role';
+  end if;
+  if to_regclass('public.feedback_id_seq') is not null then
+    execute 'revoke all on sequence public.feedback_id_seq from public, anon, authenticated, service_role';
+    execute 'grant usage, select on sequence public.feedback_id_seq to service_role';
+  end if;
+end $$;
 
 comment on table public.profiles is 'Server-managed account and Stripe entitlement state.';
 comment on table public.donations is 'Idempotent Stripe Checkout records for one-off support payments.';

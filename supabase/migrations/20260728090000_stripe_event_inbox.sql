@@ -103,7 +103,7 @@ create index if not exists stripe_events_received_at_idx
 alter table public.stripe_events enable row level security;
 alter table public.stripe_events force row level security;
 
-revoke all on table public.stripe_events from public, anon, authenticated;
+revoke all on table public.stripe_events from public, anon, authenticated, service_role;
 grant select, insert, update on table public.stripe_events to service_role;
 
 comment on table public.stripe_events is
