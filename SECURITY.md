@@ -8,7 +8,7 @@ real customer data or money.
 Report vulnerabilities privately through [GitHub Security Advisories](https://github.com/Sebby1770/engineering-calculator-hub/security/advisories/new).
 Do not put credentials, customer data, or an unpatched vulnerability in a public issue.
 
-Last reviewed: 2026-07-28
+Last reviewed: 2026-08-10
 
 ## Security boundaries
 
@@ -16,11 +16,12 @@ Last reviewed: 2026-07-28
   result to Pro cloud sync.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are publishable browser
   configuration, not secrets. Database security never depends on hiding them.
-- `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET` are server-only.
+- `SUPABASE_SECRET_KEY` (or legacy `SUPABASE_SERVICE_ROLE_KEY`), `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET` are server-only.
   They must live in Vercel encrypted environment variables or an ignored `.env.local` file and
   must never use a `NEXT_PUBLIC_` prefix.
-- Server database modules import `server-only`, and the service-role REST helper accepts only the
-  four explicitly listed application tables.
+- Server database modules import `server-only`, and the privileged REST helper accepts only the
+  five explicitly listed application tables. Opaque `sb_secret_...` keys are never placed in the
+  bearer-token header; legacy service-role JWTs remain supported during rotation.
 - Card details are entered on Stripe-hosted pages and never pass through this application.
 
 ## Implemented controls
@@ -82,6 +83,11 @@ Only the server-side service role receives explicit table privileges. Constraint
 subscription states, text lengths, currency shape, and non-negative payment amounts. Frequently
 filtered and retention/audit columns are indexed. A locked `SECURITY DEFINER` trigger creates the
 private profile row when Supabase Auth creates a user.
+
+Default privileges for future `public` tables, sequences, and functions are revoked from Data API
+roles. PostgreSQL's built-in public function execution default is global, so future functions
+created by the `postgres` migration owner in any schema also require an explicit `EXECUTE` grant.
+New objects therefore fail closed until a reviewed migration grants the exact operations required.
 
 After applying a migration that creates a public table, verify its Data API exposure in Supabase.
 Newer project defaults may not expose new tables automatically. `stripe_events` must be reachable

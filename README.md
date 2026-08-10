@@ -305,32 +305,40 @@ A Supabase project (`engineering-calculator-hub`, region `us-east-1`) backs the 
 - `stripe_events` — durable, idempotent processing state for verified Stripe webhook deliveries
 - `workspace_documents` — the latest validated Pro cloud-workspace document for each user
 
-Tables have **row-level security enabled with revoked client grants**, so private application data is inaccessible with the public key — access goes through authenticated server API routes using the service-role key.
+Tables have **row-level security enabled with revoked client grants**, so private application data is inaccessible with the public key — access goes through authenticated server API routes using a server-only Supabase secret key.
 
 The complete commercial schema is versioned in:
 
 ```text
-supabase/migrations/20260710151234_workspace_documents.sql
-supabase/migrations/20260712114421_commercial_backend_hardening.sql
-supabase/migrations/20260728090000_stripe_event_inbox.sql
+supabase/migrations/20260610045146_create_donations_and_feedback.sql
+supabase/migrations/20260610055658_create_profiles_for_saas.sql
+supabase/migrations/20260803215710_engineering_calculator_workspace_documents.sql
+supabase/migrations/20260803215715_engineering_calculator_commercial_backend_hardening.sql
+supabase/migrations/20260803215720_engineering_calculator_stripe_event_inbox.sql
+supabase/migrations/20260803220020_validate_commercial_schema.sql
+supabase/migrations/20260810001350_harden_default_privileges.sql
 ```
 
 Apply all migrations to the linked project before enabling accounts, billing, feedback, or Pro cloud sync. The migrations version the account/payment/feedback tables, durable Stripe event inbox, database constraints, indexes, auth-profile trigger, forced RLS, and least-privilege grants. The browser can only sync through the authenticated, subscription-and-price-checked `/api/workspace` route.
 
+`supabase/config.toml` pins the local database to PostgreSQL 17, matching the hosted project. With Docker running, use `supabase start` and `supabase db reset` to replay the complete history before pushing a new migration. Default privileges fail closed: every future public table or sequence needs an explicit reviewed grant, as does every function created by the `postgres` migration owner.
+
 Supabase projects using the newer Data API defaults may not expose newly created public tables automatically. After applying the migrations, verify that the server-side service role can access `public.stripe_events` through the Data API. Do not grant `anon` or `authenticated` access; the inbox must remain service-role-only.
 
-Apply `20260728090000_stripe_event_inbox.sql` before deploying the matching application code. The updated webhook and subscription-status route require the new inbox and cancellation columns; deploying code first intentionally fails closed with retryable backend errors.
+Apply `20260803215720_engineering_calculator_stripe_event_inbox.sql` before deploying the matching application code. The updated webhook and subscription-status route require the new inbox and cancellation columns; deploying code first intentionally fails closed with retryable backend errors.
 
 To connect a deployment:
 
-1. Open the Supabase Dashboard → project **engineering-calculator-hub** → Settings → API.
-2. Copy the **Project URL** and the **service_role** key.
+1. Open the Supabase Dashboard → project **engineering-calculator-hub** → Settings → API Keys.
+2. Copy the **Project URL** and create a separate **secret** (`sb_secret_...`) key for this backend.
 3. Set them as environment variables (server-only — never `NEXT_PUBLIC_`):
 
 ```bash
 SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+SUPABASE_SECRET_KEY=sb_secret_...
 ```
+
+The legacy JWT-based `SUPABASE_SERVICE_ROLE_KEY` remains supported during migration. Never set either server key in a `NEXT_PUBLIC_` variable. Opaque `sb_secret_...` keys are sent only in the `apikey` header; the legacy JWT is also sent as bearer authorization for backward compatibility.
 
 Without these variables the free calculators and local workspace still work. The feedback form reports "not configured", cloud sync stays unavailable, and signed Stripe webhooks return a retryable 503 rather than silently losing payment or entitlement data.
 
@@ -366,7 +374,8 @@ Setup:
    production domain and add it (plus `http://localhost:3000`) to Redirect URLs. The default
    Supabase email service is fine to start (rate-limited); add custom SMTP for volume.
 3. **Environment variables**: the two `NEXT_PUBLIC_SUPABASE_*` values above plus
-   `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PRO_PRICE_ID`,
+   `SUPABASE_SECRET_KEY` (or legacy `SUPABASE_SERVICE_ROLE_KEY`), `STRIPE_SECRET_KEY`,
+   `STRIPE_PRO_PRICE_ID`,
    `STRIPE_WEBHOOK_SECRET`.
 
 Everything degrades gracefully: with no configuration, `/account` explains accounts are off and

@@ -5,16 +5,18 @@ import 'server-only';
 // SECURITY MODEL: every table denies the anon/authenticated client roles
 // (RLS with no write policies + revoked grants), so the browser can never
 // touch data directly. All access goes through these helpers using the
-// SERVICE ROLE key, which must only ever live in server-side environment
-// variables (never NEXT_PUBLIC_*, never shipped to the browser).
+// secret/service-role key, which must only ever live in server-side
+// environment variables (never NEXT_PUBLIC_*, never shipped to the browser).
+
+import { buildSupabaseRestHeaders } from '@/lib/supabaseApiKey';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SERVER_API_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 type TableName = 'donations' | 'feedback' | 'profiles' | 'stripe_events' | 'workspace_documents';
 
 export function isSupabaseConfigured() {
-  return Boolean(SUPABASE_URL && SERVICE_ROLE_KEY);
+  return Boolean(SUPABASE_URL && SERVER_API_KEY);
 }
 
 export interface DbResult {
@@ -33,7 +35,7 @@ async function restRequest(
   body: unknown,
   prefer: string
 ): Promise<{ ok: boolean; status: number; json: unknown }> {
-  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  if (!SUPABASE_URL || !SERVER_API_KEY) {
     return { ok: false, status: 0, json: null };
   }
 
@@ -45,12 +47,7 @@ async function restRequest(
   try {
     const response = await fetch(url, {
       method,
-      headers: {
-        apikey: SERVICE_ROLE_KEY,
-        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
-        'Content-Type': 'application/json',
-        ...(prefer ? { Prefer: prefer } : {}),
-      },
+      headers: buildSupabaseRestHeaders(SERVER_API_KEY, prefer),
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: 'no-store',
     });
