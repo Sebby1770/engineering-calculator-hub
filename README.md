@@ -1,6 +1,6 @@
 # Engineering Calculator Hub
 
-A modern, SEO-optimized engineering calculator website built with Next.js, designed for passive income via ad revenue and optional Stripe Checkout support. Features 33 fully interactive calculators across 8 categories — including calculus, geometry, and linear algebra — with a smart math engine that shows step-by-step work, SEO optimization, ad placements, and scalable architecture.
+A modern, SEO-optimized engineering calculator website built with Next.js, designed for passive income via ad revenue and optional Stripe Checkout support. Features 37 fully interactive calculators across 8 categories — including calculus, geometry, and linear algebra — with a smart math engine that shows step-by-step work, a command palette, local calculation history, shareable input URLs, SEO optimization, ad placements, and scalable architecture.
 
 ## Tech Stack
 
@@ -12,15 +12,15 @@ A modern, SEO-optimized engineering calculator website built with Next.js, desig
 
 ## Features
 
-### Calculators (33 included)
+### Calculators (37 included)
 
-- **Electrical**: Ohm's Law (with steps), Voltage Divider, Resistor Color Code, RC Time Constant, Power, Parallel/Series Resistors
+- **Electrical**: Ohm's Law (with steps, shareable URL), Voltage Divider, Resistor Color Code, RC Time Constant, Power, Parallel/Series Resistors, Voltage Drop (1φ / 3φ, AWG)
 - **Mathematics**: Universal Calculator (smart mode), Equation Solver, Scientific Calculator, Log Calculator, Binary/Hex/Decimal Converter
 - **Calculus**: Derivative, Integral, Limit, ODE Solver, Taylor Series
 - **Geometry**: Triangle Solver, Circle, Pythagorean Theorem, 3D Volume, Distance
 - **Linear Algebra**: Determinant, Matrix Inverse, Matrix Multiply, Linear System Solver, Dot/Cross Product, Eigenvalues
 - **Physics**: Energy, Frequency, Wavelength
-- **Conversions**: dB↔Voltage, Frequency↔Period
+- **Conversions**: Unit Converter (length, mass, temperature, pressure, energy, frequency), Decibel (ratios + combining sources), dB↔Voltage, Frequency↔Period
 
 ### SEO Optimization
 
@@ -55,11 +55,30 @@ Supports:
 - Richardson extrapolation for sharper limit estimates
 - Symbolic + numeric paths for integrals and derivatives
 
+### Command Palette, History & Shareable URLs
+
+- Press **⌘K** / **Ctrl+K** anywhere to search all calculators by title or keyword. Enter opens `/{slug}`; Escape closes.
+- Completing a calculation appends to a last-20 history list in `localStorage` (`slug`, `title`, `inputPreview`, `result`, `at`). The home page shows a Recent strip when any entries exist. History is client-only and does not affect SSG.
+- `useCalcQuery(defaults)` writes named numeric/string fields to the URL search string so a result is shareable. Used on Ohm's Law and the Unit Converter.
+
+### Tests
+
+```bash
+npm test          # vitest run
+npm run test:watch
+```
+
+Covered today: `mathUtils` (matrices, inverses of singular systems, geometry, limits, integrals), `smartEvaluate` (quadratic `x^2-5x+6=0`, a derivative, a simple expression), unit-conversion helpers (exact factors + affine C/F/K), and history storage.
+
+CI (`.github/workflows/ci.yml`) runs on Node 20: `npm ci`, `npm test`, `npm run lint`.
+
 ### User Features
 
 - Copy result to clipboard
-- Share calculator via Web Share API or clipboard
+- Share calculator via Web Share API or clipboard (URL includes shareable inputs where wired)
 - Save favorites (localStorage)
+- Recent evaluation history (localStorage)
+- Command palette (⌘K / Ctrl+K)
 - Keyboard input support
 - Responsive on all devices
 
@@ -80,7 +99,10 @@ npm install
 # Run development server
 npm run dev
 
-# Run all local checks
+# Run unit tests
+npm test
+
+# Run all local checks (lint, typecheck, test, build)
 npm run check
 
 # Build for production

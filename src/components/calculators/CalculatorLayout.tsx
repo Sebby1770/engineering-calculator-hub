@@ -10,6 +10,7 @@ import ShareButton from '@/components/ui/ShareButton';
 import FavoriteButton from '@/components/ui/FavoriteButton';
 import CalculatorCard from '@/components/ui/CalculatorCard';
 import { AdBanner, AdSidebar, AdInContent, AdBetweenCards } from '@/components/ads';
+import { useRecordHistory } from '@/lib/history';
 
 interface CalculatorLayoutProps {
   config: CalculatorConfig;
@@ -21,6 +22,7 @@ export default function CalculatorLayout({ config, result, children }: Calculato
   const { meta, formula, formulaExplanation, exampleUsage, faqs, relatedSlugs } = config;
   const related = getRelatedCalculators(relatedSlugs);
   const cat = categories.find((c) => c.id === meta.category);
+  useRecordHistory(meta.slug, meta.shortTitle, result, formula);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-10">

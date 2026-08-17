@@ -7,6 +7,7 @@ import { categories } from '@/data/categories';
 import { calculators } from '@/data/calculators';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import SupportCheckoutButton from '@/components/billing/SupportCheckoutButton';
+import CommandPalette from '@/components/layout/CommandPalette';
 
 // Calculators grouped by category, for the dropdown + mobile menu.
 const calculatorsByCategory = categories
@@ -138,6 +139,7 @@ export default function Header() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            <CommandPalette />
             <Link
               href="/account"
               className="hidden sm:inline-flex px-3 py-2 text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
