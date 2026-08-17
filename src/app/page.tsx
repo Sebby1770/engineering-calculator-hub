@@ -7,6 +7,7 @@ import { categories } from '@/data/categories';
 import CalculatorCard from '@/components/ui/CalculatorCard';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import { AdBanner } from '@/components/ads';
+import RecentHistory from '@/components/layout/RecentHistory';
 import type { CalculatorConfig, Category } from '@/types';
 
 type CategoryFilter = 'all' | Category;
@@ -133,7 +134,7 @@ export default function HomePage() {
             {/* Badge */}
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-200/80 bg-white/70 px-4 py-1.5 text-sm font-medium text-brand-700 shadow-sm backdrop-blur dark:border-brand-800/60 dark:bg-surface-900/70 dark:text-brand-300">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-              {calculators.length} free calculators — no sign-up, ever
+              {calculators.length} free calculators — search, ⌘K, or filter below
             </div>
 
             <h1 className="font-display text-4xl font-bold tracking-tight text-surface-950 dark:text-white sm:text-6xl">
@@ -230,6 +231,8 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <AdBanner />
       </section>
+
+      <RecentHistory />
 
       {/* ───────────────────────── Content ───────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">

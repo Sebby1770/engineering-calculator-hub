@@ -49,7 +49,7 @@ export const categories: CategoryInfo[] = [
   {
     id: "conversions",
     name: "Conversions",
-    description: "Unit conversions between dB, voltage, frequency, and period",
+    description: "Length, mass, temperature, pressure, energy, frequency, and dB conversions",
     icon: "C",
     color: "from-violet-500 to-purple-600",
   },

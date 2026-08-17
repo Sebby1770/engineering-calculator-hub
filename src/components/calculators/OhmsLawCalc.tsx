@@ -6,12 +6,16 @@ import CalcSelect from "@/components/ui/CalcSelect";
 import CalcResult from "@/components/ui/CalcResult";
 import WorkSteps from "@/components/ui/WorkSteps";
 import { ohmsLawWithSteps, type WorkStep } from "@/lib/smartMath";
+import { useCalcQuery } from "@/lib/useCalcQuery";
 
 export default function OhmsLawCalc({ onResult }: { onResult: (r: string) => void }) {
-  const [solveFor, setSolveFor] = useState("voltage");
-  const [voltage, setVoltage] = useState("");
-  const [current, setCurrent] = useState("");
-  const [resistance, setResistance] = useState("");
+  const [fields, setFields] = useCalcQuery({
+    solveFor: "voltage",
+    voltage: "",
+    current: "",
+    resistance: "",
+  });
+  const { solveFor, voltage, current, resistance } = fields;
   const [result, setResult] = useState<string | null>(null);
   const [steps, setSteps] = useState<WorkStep[]>([]);
 
@@ -45,7 +49,7 @@ export default function OhmsLawCalc({ onResult }: { onResult: (r: string) => voi
       <CalcSelect
         label="Solve for"
         value={solveFor}
-        onChange={setSolveFor}
+        onChange={(value) => setFields({ solveFor: value })}
         options={[
           { value: "voltage", label: "Voltage (V)" },
           { value: "current", label: "Current (I)" },
@@ -54,13 +58,13 @@ export default function OhmsLawCalc({ onResult }: { onResult: (r: string) => voi
       />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
         {solveFor !== "voltage" && (
-          <CalcInput label="Voltage (V)" unit="V" value={voltage} onChange={setVoltage} />
+          <CalcInput label="Voltage (V)" unit="V" value={voltage} onChange={(value) => setFields({ voltage: value })} />
         )}
         {solveFor !== "current" && (
-          <CalcInput label="Current (I)" unit="A" value={current} onChange={setCurrent} />
+          <CalcInput label="Current (I)" unit="A" value={current} onChange={(value) => setFields({ current: value })} />
         )}
         {solveFor !== "resistance" && (
-          <CalcInput label="Resistance (R)" unit="Ω" value={resistance} onChange={setResistance} />
+          <CalcInput label="Resistance (R)" unit="Ω" value={resistance} onChange={(value) => setFields({ resistance: value })} />
         )}
       </div>
       <button

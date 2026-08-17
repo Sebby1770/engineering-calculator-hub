@@ -48,20 +48,24 @@ function detectKind(expression: string): string {
 }
 
 function parseQuadratic(expression: string): { a: number; b: number; c: number } | null {
-  const eq = normalizeEquation(expression).replace(/\s*=\s*0\s*$/, "");
-  const compiled = math.compile(eq);
-  const evaluateAt = (x: number) => Number(compiled.evaluate({ x }));
+  try {
+    const eq = normalizeEquation(expression).replace(/\s*=\s*0\s*$/, "");
+    const compiled = math.compile(eq);
+    const evaluateAt = (x: number) => Number(compiled.evaluate({ x }));
 
-  const f0 = evaluateAt(0);
-  const f1 = evaluateAt(1);
-  const f2 = evaluateAt(2);
-  const c = f0;
-  const a = (f2 - 2 * f1 + c) / 2;
-  const b = f1 - a - c;
+    const f0 = evaluateAt(0);
+    const f1 = evaluateAt(1);
+    const f2 = evaluateAt(2);
+    const c = f0;
+    const a = (f2 - 2 * f1 + c) / 2;
+    const b = f1 - a - c;
 
-  if (![a, b, c].every((value) => Number.isFinite(value))) return null;
-  if (Math.abs(a) < 1e-12) return null;
-  return { a, b, c };
+    if (![a, b, c].every((value) => Number.isFinite(value))) return null;
+    if (Math.abs(a) < 1e-12) return null;
+    return { a, b, c };
+  } catch {
+    return null;
+  }
 }
 
 function solveQuadraticWithSteps(expression: string): SmartEvaluation | null {

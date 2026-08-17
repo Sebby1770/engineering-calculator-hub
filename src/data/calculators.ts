@@ -46,6 +46,7 @@ const baseCalculators: CalculatorConfig[] = [
     relatedSlugs: [
       "power-calculator",
       "voltage-divider-calculator",
+      "voltage-drop-calculator",
       "resistor-color-code-calculator",
       "parallel-resistor-calculator",
     ],
@@ -269,6 +270,55 @@ const baseCalculators: CalculatorConfig[] = [
       "parallel-resistor-calculator",
       "ohms-law-calculator",
       "voltage-divider-calculator",
+      "voltage-drop-calculator",
+    ],
+  },
+  {
+    meta: {
+      slug: "voltage-drop-calculator",
+      title: "Voltage Drop Calculator – Single-Phase & Three-Phase Wire Drop",
+      shortTitle: "Voltage Drop",
+      description:
+        "Calculate DC/AC voltage drop in copper or aluminum conductors. Uses Vd = 2·I·R·L for single-phase and Vd = √3·I·R·L for three-phase, with AWG sizes and resistivity presets.",
+      category: "electrical",
+      icon: "Vd",
+      keywords: [
+        "voltage drop",
+        "wire resistance",
+        "AWG",
+        "copper aluminum",
+        "single phase",
+        "three phase",
+      ],
+      new: true,
+    },
+    formula: "Vd = 2·I·R·L  (1φ)    Vd = √3·I·R·L  (3φ)",
+    formulaExplanation:
+      "R is the conductor resistance per unit length (Ω/m), obtained from resistivity ρ divided by cross-sectional area. L is the one-way run length. The factor 2 accounts for the outgoing and return conductors in a single-phase or DC circuit. Three-phase circuits use √3. Resistivity presets are 1.68×10⁻⁸ Ω·m for copper and 2.65×10⁻⁸ Ω·m for aluminum at 20 °C. Optional source voltage converts the drop into a percentage.",
+    exampleUsage:
+      "A 12 AWG copper run of 30 m carrying 15 A single-phase: R = ρ/A ≈ 0.00508 Ω/m, so Vd = 2 × 15 × 0.00508 × 30 ≈ 4.57 V. On a 120 V circuit that is about 3.8%.",
+    faqs: [
+      {
+        question: "Why is there a 2 in the single-phase formula?",
+        answer:
+          "Current travels out on one conductor and back on the other. Both legs have resistance, so the loop drop is twice the one-way I·R·L product.",
+      },
+      {
+        question: "How is R obtained from AWG?",
+        answer:
+          "The calculator looks up the AWG cross-section, then uses R = ρ / A with the copper or aluminum resistivity preset. You can also enter a custom area in mm².",
+      },
+      {
+        question: "What voltage drop is acceptable?",
+        answer:
+          "A common design target is no more than 3% on a branch circuit and 5% combined feeder plus branch. Always follow the applicable electrical code.",
+      },
+    ],
+    relatedSlugs: [
+      "ohms-law-calculator",
+      "power-calculator",
+      "series-resistor-calculator",
+      "resistor-color-code-calculator",
     ],
   },
   // ─── MATHEMATICS ─────────────────────────────────────────
@@ -544,6 +594,7 @@ const baseCalculators: CalculatorConfig[] = [
     ],
     relatedSlugs: [
       "voltage-to-db-converter",
+      "decibel-calculator",
       "log-calculator",
       "power-calculator",
     ],
@@ -578,6 +629,7 @@ const baseCalculators: CalculatorConfig[] = [
     ],
     relatedSlugs: [
       "db-to-voltage-converter",
+      "decibel-calculator",
       "log-calculator",
       "power-calculator",
     ],
@@ -609,6 +661,103 @@ const baseCalculators: CalculatorConfig[] = [
       "frequency-calculator",
       "wavelength-calculator",
       "rc-time-constant-calculator",
+      "unit-converter-calculator",
+    ],
+  },
+  {
+    meta: {
+      slug: "unit-converter-calculator",
+      title: "Unit Converter – Length, Mass, Temperature, Pressure, Energy, Frequency",
+      shortTitle: "Unit Converter",
+      description:
+        "Convert length, mass, temperature, pressure, energy, and frequency with exact SI factors. Temperature uses the affine Celsius/Fahrenheit/Kelvin relations. Shareable input URLs included.",
+      category: "conversions",
+      icon: "m↔ft",
+      keywords: [
+        "unit converter",
+        "length conversion",
+        "temperature converter",
+        "pressure converter",
+        "energy converter",
+        "frequency converter",
+      ],
+      new: true,
+      popular: true,
+    },
+    formula: "x_to = x_from × (k_from / k_to)    T_F = (9/5)T_C + 32    T_K = T_C + 273.15",
+    formulaExplanation:
+      "Linear quantities convert through an exact SI pivot: multiply by the source factor to reach metres, kilograms, pascals, joules, or hertz, then divide by the target factor. Temperature is affine, not a simple scale factor — Fahrenheit, Celsius, and Kelvin share an offset as well as a slope, so the converter always routes through Celsius.",
+    exampleUsage:
+      "1 inch = 0.0254 m exactly, so 1 in = 25.4 mm. 0 °C = 32 °F = 273.15 K. 1 kWh = 3.6×10⁶ J. 60 rpm = 1 Hz.",
+    faqs: [
+      {
+        question: "Are the conversion factors exact?",
+        answer:
+          "Yes for the international definitions used here: 1 in = 25.4 mm, 1 lb = 0.45359237 kg, 1 atm = 101325 Pa, 1 cal = 4.184 J, and 1 eV = 1.602176634×10⁻¹⁹ J.",
+      },
+      {
+        question: "Why is temperature handled differently?",
+        answer:
+          "Celsius, Fahrenheit, and Kelvin are related by T_F = (9/5)T_C + 32 and T_K = T_C + 273.15. A ratio-only conversion would miss the offsets (for example −40 °C = −40 °F).",
+      },
+      {
+        question: "Can I share a conversion?",
+        answer:
+          "Yes. The selected quantity, units, and value are written to the URL, so copying the address reopens the same conversion.",
+      },
+    ],
+    relatedSlugs: [
+      "frequency-to-period-converter",
+      "energy-calculator",
+      "frequency-calculator",
+      "decibel-calculator",
+    ],
+  },
+  {
+    meta: {
+      slug: "decibel-calculator",
+      title: "Decibel Calculator – Power/Voltage Ratios and Combining dB Sources",
+      shortTitle: "Decibel",
+      description:
+        "Convert two powers or voltages to decibels, or add and subtract independent dB sources by summing 10^(dB/10). Shows the linear steps for every result.",
+      category: "conversions",
+      icon: "dB+",
+      keywords: [
+        "decibel calculator",
+        "dB sum",
+        "power ratio",
+        "voltage ratio",
+        "combine dB sources",
+      ],
+      new: true,
+    },
+    formula: "dB = 10 log₁₀(P₂/P₁)    dB = 20 log₁₀(V₂/V₁)    Σ = 10 log₁₀(Σ 10^(dBᵢ/10))",
+    formulaExplanation:
+      "Decibels express a ratio on a logarithmic scale. Power ratios use a factor of 10; voltage (or current) ratios use 20 because power is proportional to voltage squared. Independent uncorrelated sources must be added as linear powers: convert each level with 10^(dB/10), add or subtract, then convert back with 10 log₁₀.",
+    exampleUsage:
+      "P₂/P₁ = 2 gives 10 log₁₀(2) ≈ 3.0103 dB. Two independent 0 dB sources combine to 3.0103 dB, not 0 dB. 10 dB minus 3 dB in the linear domain is 10 log₁₀(10 − 2) ≈ 9.0309 dB, not 7 dB.",
+    faqs: [
+      {
+        question: "Why can't I just add decibels?",
+        answer:
+          "Decibels are logarithms. Adding 3 dB + 3 dB as numbers would give 6 dB (a 4× power ratio), but two equal independent sources only double the power, which is +3.01 dB.",
+      },
+      {
+        question: "When do I use 10 vs 20?",
+        answer:
+          "Use 10 for power (and intensity). Use 20 for field quantities such as voltage, current, or pressure, because those quantities square when converted to power.",
+      },
+      {
+        question: "What happens if I subtract a larger source from a smaller one?",
+        answer:
+          "The linear difference becomes zero or negative, which is not a real positive power. The calculator reports that no real dB value exists.",
+      },
+    ],
+    relatedSlugs: [
+      "db-to-voltage-converter",
+      "voltage-to-db-converter",
+      "log-calculator",
+      "power-calculator",
     ],
   },
 ];

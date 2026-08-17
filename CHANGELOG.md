@@ -2,6 +2,21 @@
 
 All notable changes to Engineering Calculator Hub are documented in this file.
 
+## [1.3.0] - 2026-08-17
+
+### Added
+- **Vitest** test suite for `mathUtils`, `smartEvaluate`, unit conversion helpers, and calculation history, plus a GitHub Actions CI workflow (Node 20: `npm ci`, `npm test`, `npm run lint`).
+- **Calculation history** — last 20 evaluations (`slug`, `title`, `inputPreview`, `result`, `at`) stored in `localStorage`. Completing a calculator appends an entry; the home page shows a Recent strip when any exist.
+- **Command palette** — press ⌘K / Ctrl+K to search every calculator by title or keyword and open it with Enter. Escape closes the palette.
+- **Unit Converter** (`unit-converter-calculator`) for length, mass, temperature, pressure, energy, and frequency. Linear units use exact SI factors; temperature is affine (C/F/K).
+- **Voltage Drop** (`voltage-drop-calculator`) with single-phase `Vd = 2·I·R·L`, three-phase `Vd = √3·I·R·L`, copper/aluminum resistivity presets, and a common AWG table. Worked steps included.
+- **Decibel** (`decibel-calculator`) for power and voltage ratios plus adding/subtracting independent dB sources via `10^(dB/10)`. Worked steps included.
+- **Shareable inputs** via `useCalcQuery` — named fields persist to the URL. Wired up on Ohm's Law and the Unit Converter.
+
+### Changed
+- Home page keeps search and category filters, and mentions the live calculator count (now 37).
+- README documents tests, the new tools, the command palette, history, and shareable URLs.
+
 ## [1.2.0] - 2026-07-06
 
 ### Added

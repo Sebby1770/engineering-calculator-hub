@@ -40,6 +40,9 @@ import LinearSystemCalc from "@/components/calculators/LinearSystemCalc";
 import DotCrossProductCalc from "@/components/calculators/DotCrossProductCalc";
 import EigenvalueCalc from "@/components/calculators/EigenvalueCalc";
 import EquationSolverCalc from "@/components/calculators/EquationSolverCalc";
+import UnitConverterCalc from "@/components/calculators/UnitConverterCalc";
+import VoltageDropCalc from "@/components/calculators/VoltageDropCalc";
+import DecibelCalc from "@/components/calculators/DecibelCalc";
 
 const CALCULATOR_MAP: Record<
   string,
@@ -79,6 +82,9 @@ const CALCULATOR_MAP: Record<
   "linear-system-calculator": LinearSystemCalc,
   "dot-cross-product-calculator": DotCrossProductCalc,
   "eigenvalue-calculator": EigenvalueCalc,
+  "unit-converter-calculator": UnitConverterCalc,
+  "voltage-drop-calculator": VoltageDropCalc,
+  "decibel-calculator": DecibelCalc,
 };
 
 export default function CalculatorPageClient({ slug }: { slug: string }) {
