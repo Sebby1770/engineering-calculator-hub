@@ -1,5 +1,7 @@
 # Engineering Calculator Hub
 
+**Live site:** [https://sebby1770.github.io/engineering-calculator-hub/](https://sebby1770.github.io/engineering-calculator-hub/)
+
 A commercial-ready engineering calculation workspace built with Next.js. Version 2.2 includes 47 deterministic calculators across 9 categories, a reproducible local-first project workspace, review-ready evidence exports, secure Pro cloud-sync architecture, Stripe subscriptions, and a smart math engine that shows its work.
 
 The product strategy is deliberately simple: core formulas remain free and indexable; Pro monetizes the workflow around them through cloud backup, device-to-device recovery, and workflow convenience.
@@ -11,6 +13,9 @@ The product strategy is deliberately simple: core formulas remain free and index
 - **Tailwind CSS** for styling
 - **Dark/Light mode** with system preference detection
 - **Stripe Checkout** optional server-side integration
+- **GitHub Pages** static export of the calculators (`npm run build:pages`)
+
+GitHub Pages hosts the browser tools at `/engineering-calculator-hub/`. Stripe checkout, account APIs, and Pro cloud sync need the Node server (Vercel / `next start`). Local workspace still works on Pages.
 
 ## Features
 

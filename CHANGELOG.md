@@ -5,6 +5,7 @@ All notable changes to Engineering Calculator Hub are documented in this file.
 ## [2.2.0] - 2026-08-20
 
 ### Added
+- **GitHub Pages** static site at https://sebby1770.github.io/engineering-calculator-hub/ (`npm run build:pages`). Calculators and local workspace run in the browser; Stripe/API routes stay on the Node host.
 - **Digital & Networking** category with three tools:
   - **Binary calculator** — 8/16/32/64-bit convert with nibble grouping, AND/OR/XOR/NAND/NOR/NOT/shifts, and two’s-complement encode
   - **Boolean algebra** — truth table plus Quine–McCluskey minimal SOP (AND/OR/NOT/XOR/NAND/NOR, juxtaposition `AB`, postfix `'`)

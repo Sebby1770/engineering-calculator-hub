@@ -60,7 +60,17 @@ const securityHeaders = [
   { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
 ];
 
+const isGitHubPages = process.env.GITHUB_PAGES === 'true';
+const pagesBasePath = '/engineering-calculator-hub';
+
 const nextConfig = {
+  ...(isGitHubPages
+    ? {
+        output: 'export',
+        basePath: pagesBasePath,
+        trailingSlash: true,
+      }
+    : {}),
   images: {
     unoptimized: true,
   },
@@ -72,19 +82,20 @@ const nextConfig = {
   reactStrictMode: true,
   // Never ship client-side source maps to production (avoids leaking original source).
   productionBrowserSourceMaps: false,
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: securityHeaders,
-      },
-      {
-        // Keep API responses out of search engines.
-        source: '/api/:path*',
-        headers: [{ key: 'X-Robots-Tag', value: 'noindex' }],
-      },
-    ];
-  },
 };
+
+if (!isGitHubPages) {
+  nextConfig.headers = async () => [
+    {
+      source: '/:path*',
+      headers: securityHeaders,
+    },
+    {
+      // Keep API responses out of search engines.
+      source: '/api/:path*',
+      headers: [{ key: 'X-Robots-Tag', value: 'noindex' }],
+    },
+  ];
+}
 
 module.exports = nextConfig;

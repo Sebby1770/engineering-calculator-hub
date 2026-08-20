@@ -10,7 +10,8 @@ export const metadata: Metadata = {
 };
 
 // Always verify the session server-side — never trust "the success URL was
-// visited" as proof of payment.
+// visited" as proof of payment. The GitHub Pages export swaps this file for a
+// static thank-you stub (see scripts/build-pages.mjs).
 export const dynamic = 'force-dynamic';
 
 type CheckoutSuccessProps = {

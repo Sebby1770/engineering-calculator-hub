@@ -19,6 +19,8 @@ export function generateStaticParams() {
   return calculators.map((c) => ({ slug: c.meta.slug }));
 }
 
+export const dynamicParams = false;
+
 // Dynamic SEO metadata per calculator
 export async function generateMetadata({ params }: CalculatorPageProps): Promise<Metadata> {
   const { slug } = await params;

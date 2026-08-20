@@ -2,6 +2,7 @@
 node_modules/
 .next/
 out/
+.pages-api-park/
 coverage/
 .DS_Store
 .claude/
