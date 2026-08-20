@@ -60,4 +60,11 @@ export const categories: CategoryInfo[] = [
     icon: "S",
     color: "from-rose-500 to-pink-600",
   },
+  {
+    id: "digital",
+    name: "Digital & Networking",
+    description: "Binary, Boolean algebra, and IPv4 subnetting",
+    icon: "D",
+    color: "from-sky-500 to-cyan-600",
+  },
 ];

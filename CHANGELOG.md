@@ -2,6 +2,15 @@
 
 All notable changes to Engineering Calculator Hub are documented in this file.
 
+## [2.2.0] - 2026-08-20
+
+### Added
+- **Digital & Networking** category with three tools:
+  - **Binary calculator** — 8/16/32/64-bit convert with nibble grouping, AND/OR/XOR/NAND/NOR/NOT/shifts, and two’s-complement encode
+  - **Boolean algebra** — truth table plus Quine–McCluskey minimal SOP (AND/OR/NOT/XOR/NAND/NOR, juxtaposition `AB`, postfix `'`)
+  - **IP subnetting** — IPv4 CIDR/mask lookup, equal prefix splits, and VLSM from a host list (`/31` RFC 3021, `/32` host route)
+- Unit tests in `tests/digitalTools.test.mjs` for conversion, bitwise masking, classic Boolean identities, `/24`–`/32` math, and a VLSM carve.
+
 ## [2.0.0] - 2026-07-15
 
 ### Added

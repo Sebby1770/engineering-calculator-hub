@@ -1,6 +1,6 @@
 # Engineering Calculator Hub
 
-A commercial-ready engineering calculation workspace built with Next.js. Version 2.1 includes 44 deterministic calculators across 8 categories, a reproducible local-first project workspace, review-ready evidence exports, secure Pro cloud-sync architecture, Stripe subscriptions, and a smart math engine that shows its work.
+A commercial-ready engineering calculation workspace built with Next.js. Version 2.2 includes 47 deterministic calculators across 9 categories, a reproducible local-first project workspace, review-ready evidence exports, secure Pro cloud-sync architecture, Stripe subscriptions, and a smart math engine that shows its work.
 
 The product strategy is deliberately simple: core formulas remain free and indexable; Pro monetizes the workflow around them through cloud backup, device-to-device recovery, and workflow convenience.
 
@@ -14,7 +14,7 @@ The product strategy is deliberately simple: core formulas remain free and index
 
 ## Features
 
-### Calculators (44 included)
+### Calculators (47 included)
 
 - **Electrical**: Ohm's Law (with steps), tolerance-aware E24 Voltage Divider Designer, Resistor Color Code, RC Time Constant, Power, Parallel/Series Resistors, LED Resistor Designer, PCB Trace Drop, Three-Phase Power, Battery Runtime, temperature-aware Wire Voltage Drop, and Regulator Thermal Designer
 - **Mathematics**: Universal Calculator (smart mode), Equation Solver, Scientific Calculator, Log Calculator, Binary/Hex/Decimal Converter
@@ -24,6 +24,7 @@ The product strategy is deliberately simple: core formulas remain free and index
 - **Physics**: Energy, Frequency, Wavelength
 - **Conversions**: dB↔Voltage, Frequency↔Period
 - **Signals & Systems**: Series RLC Resonance, ADC Resolution, RC Low-Pass Filter Designer, and Op-Amp Gain Checker
+- **Digital & Networking**: Binary (bitwise / two’s complement), Boolean algebra (truth table + SOP), IPv4 subnetting (CIDR, splits, VLSM)
 
 ### Engineering Workspace
 

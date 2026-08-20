@@ -37,6 +37,12 @@ const PATHS: Record<Category, React.ReactNode> = {
     </>
   ),
   signals: <path d="M2 12c2-6.5 4-6.5 6 0s4 6.5 6 0 4-6.5 8 0" />,
+  digital: (
+    <>
+      <rect x="3" y="7" width="18" height="10" rx="2" />
+      <path d="M7 12h2M11 12h2M15 12h2" />
+    </>
+  ),
 };
 
 interface CategoryIconProps {

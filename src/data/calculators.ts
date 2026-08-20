@@ -1,5 +1,6 @@
 import { CalculatorConfig } from "@/types";
 import { advancedCalculators } from "@/data/advancedCalculators";
+import { digitalCalculators } from "@/data/digitalCalculators";
 import { professionalCalculatorConfigs } from "@/data/professionalCalculators";
 
 const baseCalculators: CalculatorConfig[] = [
@@ -424,7 +425,12 @@ const baseCalculators: CalculatorConfig[] = [
           "Hexadecimal (base 16) is a compact way to represent binary data. Each hex digit maps to exactly 4 binary bits, making it much easier to read than long binary strings.",
       },
     ],
-    relatedSlugs: ["scientific-calculator", "log-calculator"],
+    relatedSlugs: [
+      "binary-calculator",
+      "boolean-algebra-calculator",
+      "ip-subnet-calculator",
+      "scientific-calculator",
+    ],
   },
   // ─── PHYSICS ─────────────────────────────────────────────
   {
@@ -629,6 +635,7 @@ export const calculators: CalculatorConfig[] = [
   ...baseCalculators,
   ...advancedCalculators,
   ...professionalCalculatorConfigs,
+  ...digitalCalculators,
 ];
 
 export function getCalculatorBySlug(

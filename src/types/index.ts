@@ -6,7 +6,8 @@ export type Category =
   | "linear_algebra"
   | "physics"
   | "conversions"
-  | "signals";
+  | "signals"
+  | "digital";
 
 export interface CalculatorMeta {
   slug: string;

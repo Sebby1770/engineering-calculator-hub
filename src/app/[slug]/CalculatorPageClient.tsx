@@ -40,6 +40,9 @@ import LinearSystemCalc from "@/components/calculators/LinearSystemCalc";
 import DotCrossProductCalc from "@/components/calculators/DotCrossProductCalc";
 import EigenvalueCalc from "@/components/calculators/EigenvalueCalc";
 import EquationSolverCalc from "@/components/calculators/EquationSolverCalc";
+import BinaryCalc from "@/components/calculators/BinaryCalc";
+import BooleanAlgebraCalc from "@/components/calculators/BooleanAlgebraCalc";
+import IpSubnetCalc from "@/components/calculators/IpSubnetCalc";
 import EngineeringFormulaTool from "@/components/calculators/EngineeringFormulaTool";
 import { getEngineeringToolBySlug } from "@/data/professionalCalculators";
 import type { CalculatorCapture } from "@/lib/workspace";
@@ -82,6 +85,9 @@ const CALCULATOR_MAP: Record<
   "linear-system-calculator": LinearSystemCalc,
   "dot-cross-product-calculator": DotCrossProductCalc,
   "eigenvalue-calculator": EigenvalueCalc,
+  "binary-calculator": BinaryCalc,
+  "boolean-algebra-calculator": BooleanAlgebraCalc,
+  "ip-subnet-calculator": IpSubnetCalc,
 };
 
 export default function CalculatorPageClient({ slug }: { slug: string }) {
