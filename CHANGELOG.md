@@ -2,6 +2,18 @@
 
 All notable changes to Engineering Calculator Hub are documented in this file.
 
+## Unreleased
+
+### Added
+- Accessible global `Cmd/Ctrl+K` calculator finder with ranked multi-word, formula, unit, and engineering-symbol search.
+- Resilient local favourites and recently viewed calculators, with home-page quick access and malformed-storage recovery.
+- Calculator route loading and error states plus live result announcements and clearer button semantics.
+- Regression tests for search ranking, activity ordering, deduplication, limits, and storage recovery.
+
+### Changed
+- Split calculator implementations into statically analyzable lazy chunks so each route loads only the selected tool.
+- Derive public calculator counts from the source catalogue instead of stale hard-coded metadata.
+
 ## [2.2.0] - 2026-08-20
 
 ### Added

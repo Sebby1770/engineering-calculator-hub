@@ -6,8 +6,10 @@ import { calculators } from '@/data/calculators';
 import { categories } from '@/data/categories';
 import CalculatorCard from '@/components/ui/CalculatorCard';
 import CategoryIcon from '@/components/ui/CategoryIcon';
+import CalculatorQuickAccess from '@/components/navigation/CalculatorQuickAccess';
+import { rankCalculators } from '@/lib/calculatorSearch';
 import { AdBanner } from '@/components/ads';
-import type { CalculatorConfig, Category } from '@/types';
+import type { Category } from '@/types';
 
 type CategoryFilter = 'all' | Category;
 
@@ -22,20 +24,6 @@ const FEATURED_SLUGS = [
   'ohms-law-calculator',
 ];
 
-function matchesSearch(calculator: CalculatorConfig, query: string) {
-  const haystack = [
-    calculator.meta.title,
-    calculator.meta.shortTitle,
-    calculator.meta.description,
-    calculator.formula,
-    ...calculator.meta.keywords,
-  ]
-    .join(' ')
-    .toLowerCase();
-
-  return haystack.includes(query);
-}
-
 export default function HomePage() {
   const popular = FEATURED_SLUGS.flatMap((slug) => {
     const calculator = calculators.find((item) => item.meta.slug === slug);
@@ -44,7 +32,7 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const searchRef = useRef<HTMLInputElement>(null);
-  const trimmedSearch = search.trim().toLowerCase();
+  const trimmedSearch = search.trim();
 
   // Only show categories that actually contain calculators.
   const populatedCategories = useMemo(
@@ -84,11 +72,10 @@ export default function HomePage() {
   }, []);
 
   const filtered = useMemo(() => {
-    return calculators.filter((calculator) => {
-      const categoryMatch = activeCategory === 'all' || calculator.meta.category === activeCategory;
-      const searchMatch = !trimmedSearch || matchesSearch(calculator, trimmedSearch);
-      return categoryMatch && searchMatch;
-    });
+    const categoryMatches = calculators.filter(
+      (calculator) => activeCategory === 'all' || calculator.meta.category === activeCategory,
+    );
+    return trimmedSearch ? rankCalculators(categoryMatches, trimmedSearch) : categoryMatches;
   }, [activeCategory, trimmedSearch]);
 
   const isFiltering = trimmedSearch !== '' || activeCategory !== 'all';
@@ -253,6 +240,8 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <AdBanner />
       </section>
+
+      <CalculatorQuickAccess />
 
       {/* ───────────────────────── Content ───────────────────────── */}
       <section id="calculators" className="scroll-mt-24 mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">

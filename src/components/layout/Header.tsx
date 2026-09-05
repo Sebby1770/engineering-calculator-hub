@@ -6,6 +6,7 @@ import { useTheme } from './ThemeProvider';
 import { categories } from '@/data/categories';
 import { calculators } from '@/data/calculators';
 import CategoryIcon from '@/components/ui/CategoryIcon';
+import { openCalculatorSearch } from '@/lib/calculatorActivity';
 
 // Calculators grouped by category, for the dropdown + mobile menu.
 const calculatorsByCategory = categories
@@ -137,6 +138,20 @@ export default function Header() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={openCalculatorSearch}
+              aria-label="Find a calculator"
+              aria-keyshortcuts="Meta+K Control+K"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-surface-200 bg-white px-2.5 text-sm font-medium text-surface-600 shadow-sm transition hover:border-brand-300 hover:text-brand-600 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 dark:hover:border-brand-700 dark:hover:text-brand-300 sm:px-3"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-4-4" />
+              </svg>
+              <span className="hidden xl:inline">Find tools</span>
+              <kbd className="hidden rounded border border-surface-200 bg-surface-50 px-1.5 py-0.5 font-mono text-[10px] text-surface-400 dark:border-surface-700 dark:bg-surface-800 sm:inline">⌘K</kbd>
+            </button>
             <Link
               href="/account"
               className="hidden sm:inline-flex px-3 py-2 text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
@@ -149,6 +164,7 @@ export default function Header() {
 
             {/* Theme toggle */}
             <button
+              type="button"
               onClick={toggle}
               aria-label="Toggle theme"
               className="w-9 h-9 flex items-center justify-center rounded-lg text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
@@ -162,6 +178,7 @@ export default function Header() {
 
             {/* Mobile hamburger */}
             <button
+              type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
               className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800"
               aria-label="Menu"

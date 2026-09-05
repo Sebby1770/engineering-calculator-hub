@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import Link from 'next/link';
 import { CalculatorConfig } from '@/types';
 import { getRelatedCalculators } from '@/data/calculators';
@@ -12,6 +12,7 @@ import CalculatorCard from '@/components/ui/CalculatorCard';
 import SaveToWorkspaceButton from '@/components/workspace/SaveToWorkspaceButton';
 import { AdBanner, AdSidebar, AdInContent, AdBetweenCards } from '@/components/ads';
 import type { CalculatorCapture } from '@/lib/workspace';
+import { recordRecentCalculator } from '@/lib/calculatorActivity';
 
 interface CalculatorLayoutProps {
   config: CalculatorConfig;
@@ -24,6 +25,10 @@ export default function CalculatorLayout({ config, result, evidence, children }:
   const { meta, formula, formulaExplanation, exampleUsage, faqs, relatedSlugs } = config;
   const related = getRelatedCalculators(relatedSlugs);
   const cat = categories.find((c) => c.id === meta.category);
+
+  useEffect(() => {
+    recordRecentCalculator(meta.slug);
+  }, [meta.slug]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-10">

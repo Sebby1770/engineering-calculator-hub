@@ -12,7 +12,12 @@ export default function CalcResult({
   detail,
 }: CalcResultProps) {
   return (
-    <div className="mt-4 p-4 rounded-lg bg-surface-50 dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      className="mt-4 p-4 rounded-lg bg-surface-50 dark:bg-surface-800 border border-surface-200 dark:border-surface-700"
+    >
       <span className="text-sm text-surface-500 dark:text-surface-400">
         {label}:
       </span>

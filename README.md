@@ -85,6 +85,8 @@ Supports:
 
 ### User Features
 
+- Global accessible calculator finder (`Cmd/Ctrl+K`) with ranked formula, unit, symbol, and multi-word search
+- Resilient favourites and recently viewed tools, surfaced as quick access on the home page
 - Copy result to clipboard
 - Share calculator via Web Share API or clipboard
 - Save favorites (localStorage)
@@ -97,6 +99,7 @@ Supports:
 ### Performance
 
 - Static page generation (SSG) for all calculator pages
+- Per-calculator lazy chunks so a route does not download every calculator implementation
 - Lazy-loaded ad units (IntersectionObserver)
 - Minimal JavaScript bundle
 - Font preloading
@@ -177,7 +180,9 @@ src/
 │   │   └── health/         # Health check
 │   └── [slug]/
 │       ├── page.tsx        # Dynamic calculator page (SSG + metadata)
-│       └── CalculatorPageClient.tsx  # Client component router
+│       ├── loading.tsx     # Route loading state
+│       ├── error.tsx       # Recoverable calculator error boundary
+│       └── CalculatorPageClient.tsx  # Lazy client component router
 ├── components/
 │   ├── ads/
 │   │   ├── AdUnit.tsx      # Core ad component (lazy loading, multi-provider)
@@ -192,6 +197,9 @@ src/
 │   │   ├── Header.tsx      # Navigation with categories and theme toggle
 │   │   ├── Footer.tsx      # SEO footer with internal links
 │   │   └── ThemeProvider.tsx
+│   ├── navigation/
+│   │   ├── CalculatorCommandPalette.tsx # Accessible global finder
+│   │   └── CalculatorQuickAccess.tsx    # Favourites and recents
 │   └── ui/
 │       ├── CalcInput.tsx   # Reusable number input with label/unit
 │       ├── CalcSelect.tsx  # Reusable select dropdown
@@ -204,6 +212,8 @@ src/
 │   └── categories.ts       # Category definitions
 ├── lib/
 │   ├── adConfig.ts         # Environment-based ad provider configuration
+│   ├── calculatorActivity.ts # Safe local favourites/recent state
+│   ├── calculatorSearch.ts # Ranked, symbol-aware search
 │   └── site.ts             # Canonical site URL helpers
 └── types/
     └── index.ts            # TypeScript types
@@ -251,11 +261,14 @@ export default function YourCalc({
 3. **Register** in `src/app/[slug]/CalculatorPageClient.tsx`:
 
 ```typescript
-import YourCalc from "@/components/calculators/YourCalc";
+const YourCalc = dynamic(
+  () => import("@/components/calculators/YourCalc"),
+  { loading: CalculatorLoading },
+);
 
-const CALCULATOR_MAP = {
+const CALCULATOR_RENDERERS = {
   // ...existing
-  "your-calculator-slug": YourCalc,
+  "your-calculator-slug": (onResult) => <YourCalc onResult={onResult} />,
 };
 ```
 

@@ -3,6 +3,8 @@ import { DM_Sans, IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import CalculatorCommandPalette from '@/components/navigation/CalculatorCommandPalette';
+import { calculators } from '@/data/calculators';
 import { AD_CONFIG } from '@/lib/adConfig';
 import { getSiteUrl } from '@/lib/site';
 import './globals.css';
@@ -19,7 +21,7 @@ export const metadata: Metadata = {
     template: '%s | Engineering Calculator Hub',
   },
   description:
-    'Forty-four transparent engineering calculators, tolerance-aware electrical design tools, and a reproducible local-first workspace for review-ready calculation evidence.',
+    `${calculators.length} transparent engineering calculators, tolerance-aware electrical design tools, and a reproducible local-first workspace for review-ready calculation evidence.`,
   keywords: [
     'engineering calculator',
     'ohms law calculator',
@@ -37,7 +39,7 @@ export const metadata: Metadata = {
     siteName: 'Engineering Calculator Hub',
     title: 'Fast enough for a calculator. Rigorous enough for a design review.',
     description:
-      'Forty-four transparent engineering tools plus a reproducible workspace for reviewable design calculations.',
+      `${calculators.length} transparent engineering tools plus a reproducible workspace for reviewable design calculations.`,
     images: [
       {
         url: '/og-v2.png',
@@ -50,7 +52,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Fast enough for a calculator. Rigorous enough for a design review.',
-    description: 'Forty-four transparent engineering tools and a project-based calculation workspace.',
+    description: `${calculators.length} transparent engineering tools and a project-based calculation workspace.`,
     images: ['/og-v2.png'],
   },
   robots: {
@@ -89,6 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <div className="flex flex-col min-h-screen">
             <Header />
+            <CalculatorCommandPalette />
             <main id="main-content" className="flex-1">{children}</main>
             <Footer />
           </div>
