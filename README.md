@@ -2,7 +2,7 @@
 
 **Live site:** [https://sebby1770.github.io/engineering-calculator-hub/](https://sebby1770.github.io/engineering-calculator-hub/)
 
-A commercial-ready engineering calculation workspace built with Next.js. Version 2.4 includes 67 deterministic calculators across 13 categories (mechanical, civil, thermofluids, materials, electrical, mathematics, calculus, geometry, linear algebra, physics, conversions, signals, and digital), a reproducible local-first project workspace, review-ready evidence exports, secure Pro cloud-sync architecture, Stripe subscriptions, and a smart math engine that shows its work. This release adds other engineering disciplines; it does **not** add new electrical calculators.
+A commercial-ready engineering calculation workspace built with Next.js. Version 2.5 includes 67 deterministic calculators across 13 categories (mechanical, civil, thermofluids, materials, electrical, mathematics, calculus, geometry, linear algebra, physics, conversions, signals, and digital), a reproducible local-first project workspace, review-ready evidence exports, secure Pro cloud-sync architecture, Stripe subscriptions, and a smart math engine that shows its work. This release adds other engineering disciplines; it does **not** add new electrical calculators.
 
 The product strategy is deliberately simple: core formulas remain free and indexable; Pro monetizes the workflow around them through cloud backup, device-to-device recovery, and workflow convenience.
 

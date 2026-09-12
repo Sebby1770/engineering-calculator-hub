@@ -4,6 +4,11 @@ All notable changes to Engineering Calculator Hub are documented in this file.
 
 ## Unreleased
 
+## [2.5.0] - 2026-09-13
+
+### Changed
+- Homepage and chrome restyled as a **drafting-plate workshop**: warm paper stock, mill-finished plates with corner ticks and screws, Syne display type, a live compass rose, and a scrolling formula ticker. Search, bays, and calculators are unchanged.
+
 ## [2.4.0] - 2026-09-13
 
 ### Added

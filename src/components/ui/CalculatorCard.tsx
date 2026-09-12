@@ -14,12 +14,9 @@ export default function CalculatorCard({ meta, formula }: CalculatorCardProps) {
   return (
     <Link
       href={`/${meta.slug}`}
-      className="card-sheen group relative flex flex-col overflow-hidden rounded-lg border border-surface-200 bg-white p-5 pl-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-forge-400 hover:shadow-lg hover:shadow-forge-500/10 dark:border-surface-800 dark:bg-surface-900 dark:hover:border-forge-400/50"
+      className="plate plate-corners card-sheen group relative flex flex-col overflow-hidden p-5 pl-6 transition-all duration-200 hover:-translate-y-0.5"
     >
-      <span
-        aria-hidden="true"
-        className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-forge-300 via-forge-500 to-cyan-500"
-      />
+      <span className="screw right-2 top-2 hidden sm:block" />
       {meta.new && (
         <span className="absolute top-3 right-3 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
           New

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { DM_Sans, IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google';
+import { Syne, IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -10,7 +10,7 @@ import { getSiteUrl } from '@/lib/site';
 import './globals.css';
 
 const siteUrl = getSiteUrl();
-const displayFont = DM_Sans({ subsets: ['latin'], variable: '--font-display' });
+const displayFont = Syne({ subsets: ['latin'], weight: ['500', '600', '700', '800'], variable: '--font-display' });
 const bodyFont = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-body' });
 const monoFont = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '600'], variable: '--font-mono' });
 
@@ -84,7 +84,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           />
         )}
       </head>
-      <body className="font-body bg-white dark:bg-surface-950 text-surface-900 dark:text-surface-100 antialiased">
+      <body className="font-body bg-paper-50 dark:bg-surface-950 text-surface-900 dark:text-surface-100 antialiased">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"

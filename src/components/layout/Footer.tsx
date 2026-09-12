@@ -9,7 +9,7 @@ const FOOTER_CATEGORY_IDS: Category[] = ['mechanical', 'civil', 'thermofluids', 
 
 export default function Footer() {
   return (
-    <footer className="mt-16 border-t border-forge-500/20 bg-surface-50 dark:border-forge-400/15 dark:bg-surface-950">
+    <footer className="mt-16 border-t border-forge-700/25 bg-paper-100/50 dark:border-cyan-400/15 dark:bg-surface-950">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         <AdFooter className="mb-10" />
 

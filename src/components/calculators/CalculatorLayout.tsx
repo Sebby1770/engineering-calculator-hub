@@ -78,7 +78,7 @@ export default function CalculatorLayout({ config, result, evidence, children }:
           </div>
 
           {/* Calculator UI */}
-          <div className="relative mb-8 overflow-hidden rounded-xl border border-forge-400/25 bg-white p-5 pl-6 shadow-sm sm:p-6 sm:pl-7 dark:border-forge-500/20 dark:bg-surface-900">
+          <div className="plate plate-corners relative mb-8 overflow-hidden p-5 pl-6 sm:p-6 sm:pl-7">
             <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-forge-300 via-forge-500 to-cyan-500" />
             {formula && (
               <p className="mb-4 font-mono text-xs text-forge-800 dark:text-cyan-200">

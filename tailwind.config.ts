@@ -44,6 +44,11 @@ const config: Config = {
           800: '#4d3c16',
           900: '#2f250e',
         },
+        paper: {
+          50: '#f4efe4',
+          100: '#e8dfcc',
+          200: '#d6c8a8',
+        },
       },
       fontFamily: {
         display: ['var(--font-display)', 'system-ui', 'sans-serif'],
@@ -57,6 +62,8 @@ const config: Config = {
         'gradient-x': 'gradientX 6s ease infinite',
         'float-slow': 'floatSlow 14s ease-in-out infinite alternate',
         'grid-shift': 'gridShift 36s linear infinite',
+        marquee: 'marquee 42s linear infinite',
+        compass: 'compass 80s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -82,6 +89,14 @@ const config: Config = {
         gridShift: {
           '0%': { backgroundPosition: '0 0, 0 0, 0 0, 0 0' },
           '100%': { backgroundPosition: '112px 194px, 112px 194px, 40px 40px, 40px 40px' },
+        },
+        marquee: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+        compass: {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
         },
       },
     },

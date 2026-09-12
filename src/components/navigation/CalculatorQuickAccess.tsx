@@ -49,7 +49,7 @@ export default function CalculatorQuickAccess() {
 
   return (
     <section aria-labelledby="quick-access-title" className="mx-auto max-w-7xl px-4 pb-9 sm:px-6 lg:px-8">
-      <div className="rounded-2xl border border-surface-200 bg-surface-50/80 p-5 dark:border-surface-800 dark:bg-surface-900/60 sm:p-6">
+      <div className="plate plate-corners p-5 sm:p-6">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-600 dark:text-brand-400">Your toolbox</p>

@@ -44,7 +44,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-forge-500/25 bg-white/80 backdrop-blur-xl dark:border-forge-400/20 dark:bg-surface-950/80">
+    <header className="sticky top-0 z-50 border-b border-forge-700/25 bg-paper-50/85 backdrop-blur-xl dark:border-cyan-400/15 dark:bg-surface-950/85">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -56,8 +56,13 @@ export default function Header() {
                 <path d="M6.4 6.4l2.1 2.1M15.5 15.5l2.1 2.1M17.6 6.4l-2.1 2.1M8.5 15.5l-2.1 2.1" />
               </svg>
             </div>
-            <span className="font-display font-bold text-lg text-surface-900 dark:text-white hidden sm:block">
-              EngCalc<span className="text-forge-600 dark:text-forge-300">Hub</span>
+            <span className="hidden sm:block">
+              <span className="block font-display text-lg font-extrabold leading-none tracking-tight text-surface-900 dark:text-white">
+                EngCalc<span className="text-forge-700 dark:text-forge-300">Hub</span>
+              </span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.22em] text-forge-700/80 dark:text-cyan-300/80">
+                ECH · {calculators.length} SI plates
+              </span>
             </span>
           </Link>
 
@@ -94,7 +99,7 @@ export default function Header() {
                 <div
                   role="menu"
                   aria-label="All calculators"
-                  className="absolute left-0 top-full max-h-[72vh] w-[64rem] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-forge-400/25 bg-white p-5 shadow-2xl dark:border-forge-500/20 dark:bg-surface-900"
+                  className="plate plate-corners absolute left-0 top-full z-50 max-h-[72vh] w-[64rem] max-w-[calc(100vw-2rem)] overflow-y-auto p-5"
                 >
                   <div className="grid grid-cols-2 gap-x-8 gap-y-5 xl:grid-cols-4">
                     {calculatorsByCategory.map(({ category, items }) => (
@@ -162,7 +167,7 @@ export default function Header() {
             >
               Account
             </Link>
-            <Link href="/pricing" className="hidden rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm shadow-brand-500/20 transition hover:bg-brand-700 sm:inline-flex">
+            <Link href="/pricing" className="hidden bg-forge-800 px-3.5 py-2 text-sm font-bold tracking-wide text-paper-50 shadow-[3px_3px_0_0_rgb(176,138,46)] transition hover:translate-x-px hover:translate-y-px sm:inline-flex">
               Go Pro
             </Link>
 
