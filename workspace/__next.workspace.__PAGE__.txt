@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[70661,["/engineering-calculator-hub/_next/static/chunks/436j57u7x-pnu.js","/engineering-calculator-hub/_next/static/chunks/1mm6l2tpjvpp7.js","/engineering-calculator-hub/_next/static/chunks/14mrh2-p_w84d.js","/engineering-calculator-hub/_next/static/chunks/1sglza_tx4jq4.js","/engineering-calculator-hub/_next/static/chunks/0gr0s-zzhzgd7.js","/engineering-calculator-hub/_next/static/chunks/3qz6r7tbzy8l4.js"],"default"]
+3:I[97367,["/engineering-calculator-hub/_next/static/chunks/436j57u7x-pnu.js","/engineering-calculator-hub/_next/static/chunks/1mm6l2tpjvpp7.js","/engineering-calculator-hub/_next/static/chunks/14mrh2-p_w84d.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{}],[["$","script","script-0",{"src":"/engineering-calculator-hub/_next/static/chunks/1sglza_tx4jq4.js","async":true}],["$","script","script-1",{"src":"/engineering-calculator-hub/_next/static/chunks/0gr0s-zzhzgd7.js","async":true}],["$","script","script-2",{"src":"/engineering-calculator-hub/_next/static/chunks/3qz6r7tbzy8l4.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"y7cxz_R57rwtSDf4Wa4Xy"}
+5:null
