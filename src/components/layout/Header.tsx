@@ -6,6 +6,7 @@ import { useTheme } from './ThemeProvider';
 import { categories } from '@/data/categories';
 import { calculators } from '@/data/calculators';
 import CategoryIcon from '@/components/ui/CategoryIcon';
+import { openCalculatorSearch } from '@/lib/calculatorActivity';
 
 // Calculators grouped by category, for the dropdown + mobile menu.
 const calculatorsByCategory = categories
@@ -43,16 +44,25 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-surface-200 dark:border-surface-800 bg-white/80 dark:bg-surface-950/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-forge-700/25 bg-paper-50/85 backdrop-blur-xl dark:border-cyan-400/15 dark:bg-surface-950/85">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-display font-bold text-sm">
-              EC
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-forge-400 to-cyan-700 text-white shadow-sm ring-1 ring-forge-300/70">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <circle cx="12" cy="12" r="3.2" />
+                <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
+                <path d="M6.4 6.4l2.1 2.1M15.5 15.5l2.1 2.1M17.6 6.4l-2.1 2.1M8.5 15.5l-2.1 2.1" />
+              </svg>
             </div>
-            <span className="font-display font-bold text-lg text-surface-900 dark:text-white hidden sm:block">
-              EngCalc<span className="text-brand-500">Hub</span>
+            <span className="hidden sm:block">
+              <span className="block font-display text-lg font-extrabold leading-none tracking-tight text-surface-900 dark:text-white">
+                EngCalc<span className="text-forge-700 dark:text-forge-300">Hub</span>
+              </span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.22em] text-forge-700/80 dark:text-cyan-300/80">
+                ECH · {calculators.length} SI plates
+              </span>
             </span>
           </Link>
 
@@ -89,9 +99,9 @@ export default function Header() {
                 <div
                   role="menu"
                   aria-label="All calculators"
-                  className="absolute left-0 top-full max-h-[72vh] w-[56rem] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-surface-200 bg-white p-5 shadow-2xl dark:border-surface-800 dark:bg-surface-900"
+                  className="plate plate-corners absolute left-0 top-full z-50 max-h-[72vh] w-[64rem] max-w-[calc(100vw-2rem)] overflow-y-auto p-5"
                 >
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-5 xl:grid-cols-3">
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-5 xl:grid-cols-4">
                     {calculatorsByCategory.map(({ category, items }) => (
                       <div key={category.id}>
                         <div className="mb-2 flex items-center gap-2 text-surface-500 dark:text-surface-400">
@@ -137,18 +147,33 @@ export default function Header() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={openCalculatorSearch}
+              aria-label="Find a calculator"
+              aria-keyshortcuts="Meta+K Control+K"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-surface-200 bg-white px-2.5 text-sm font-medium text-surface-600 shadow-sm transition hover:border-brand-300 hover:text-brand-600 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 dark:hover:border-brand-700 dark:hover:text-brand-300 sm:px-3"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-4-4" />
+              </svg>
+              <span className="hidden xl:inline">Find tools</span>
+              <kbd className="hidden rounded border border-surface-200 bg-surface-50 px-1.5 py-0.5 font-mono text-[10px] text-surface-400 dark:border-surface-700 dark:bg-surface-800 sm:inline">⌘K</kbd>
+            </button>
             <Link
               href="/account"
               className="hidden sm:inline-flex px-3 py-2 text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
             >
               Account
             </Link>
-            <Link href="/pricing" className="hidden rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm shadow-brand-500/20 transition hover:bg-brand-700 sm:inline-flex">
+            <Link href="/pricing" className="hidden bg-forge-800 px-3.5 py-2 text-sm font-bold tracking-wide text-paper-50 shadow-[3px_3px_0_0_rgb(176,138,46)] transition hover:translate-x-px hover:translate-y-px sm:inline-flex">
               Go Pro
             </Link>
 
             {/* Theme toggle */}
             <button
+              type="button"
               onClick={toggle}
               aria-label="Toggle theme"
               className="w-9 h-9 flex items-center justify-center rounded-lg text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
@@ -162,6 +187,7 @@ export default function Header() {
 
             {/* Mobile hamburger */}
             <button
+              type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
               className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800"
               aria-label="Menu"

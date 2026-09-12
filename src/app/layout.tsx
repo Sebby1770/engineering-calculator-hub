@@ -1,33 +1,38 @@
 import type { Metadata } from 'next';
-import { DM_Sans, IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google';
+import { Syne, IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import CalculatorCommandPalette from '@/components/navigation/CalculatorCommandPalette';
+import { calculators } from '@/data/calculators';
 import { AD_CONFIG } from '@/lib/adConfig';
 import { getSiteUrl } from '@/lib/site';
 import './globals.css';
 
 const siteUrl = getSiteUrl();
-const displayFont = DM_Sans({ subsets: ['latin'], variable: '--font-display' });
+const displayFont = Syne({ subsets: ['latin'], weight: ['500', '600', '700', '800'], variable: '--font-display' });
 const bodyFont = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-body' });
 const monoFont = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '600'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Engineering Calculator Hub – Transparent Tools and Design Workspace',
+    default: 'Engineering Calculator Hub – Multi-Discipline Tools and Design Workspace',
     template: '%s | Engineering Calculator Hub',
   },
   description:
-    'Forty-four transparent engineering calculators, tolerance-aware electrical design tools, and a reproducible local-first workspace for review-ready calculation evidence.',
+    `${calculators.length} deterministic engineering calculators across mechanical, civil, thermofluids, materials, mathematics, and electrical bays — SI formulas, worked steps, and a local-first workspace for review-ready sheets.`,
   keywords: [
     'engineering calculator',
-    'ohms law calculator',
-    'voltage divider',
+    'mechanical engineering calculator',
+    'civil engineering calculator',
+    'beam deflection',
+    'Manning equation',
+    'Carnot efficiency',
+    'Reynolds number',
     'scientific calculator',
-    'resistor calculator',
-    'unit converter',
-    'electrical engineering tools',
+    'ohms law calculator',
+    'multi-discipline engineering tools',
   ],
   authors: [{ name: 'Engineering Calculator Hub' }],
   openGraph: {
@@ -35,22 +40,22 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: siteUrl,
     siteName: 'Engineering Calculator Hub',
-    title: 'Fast enough for a calculator. Rigorous enough for a design review.',
+    title: 'A bay for every discipline. Rigorous enough for a design review.',
     description:
-      'Forty-four transparent engineering tools plus a reproducible workspace for reviewable design calculations.',
+      `${calculators.length} mechanical, civil, thermofluids, materials, mathematics, and electrical tools plus a reproducible workspace.`,
     images: [
       {
         url: '/og-v2.png',
         width: 1200,
         height: 630,
-        alt: 'Engineering Calculator Hub calculation workspace and voltage divider design sheet',
+        alt: 'Engineering Calculator Hub multi-discipline calculation workspace',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Fast enough for a calculator. Rigorous enough for a design review.',
-    description: 'Forty-four transparent engineering tools and a project-based calculation workspace.',
+    title: 'A bay for every discipline. Rigorous enough for a design review.',
+    description: `${calculators.length} multi-discipline engineering tools and a project-based calculation workspace.`,
     images: ['/og-v2.png'],
   },
   robots: {
@@ -79,7 +84,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           />
         )}
       </head>
-      <body className="font-body bg-white dark:bg-surface-950 text-surface-900 dark:text-surface-100 antialiased">
+      <body className="font-body bg-paper-50 dark:bg-surface-950 text-surface-900 dark:text-surface-100 antialiased">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
@@ -89,6 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <div className="flex flex-col min-h-screen">
             <Header />
+            <CalculatorCommandPalette />
             <main id="main-content" className="flex-1">{children}</main>
             <Footer />
           </div>

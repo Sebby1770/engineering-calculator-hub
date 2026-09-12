@@ -14,3 +14,8 @@ tsconfig.tsbuildinfo
 .npmrc
 
 macOS/DerivedData/
+
+# macOS duplicate copies
+* 2.tsx
+* 3.tsx
+SECURITY 2.md

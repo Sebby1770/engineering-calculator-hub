@@ -2,7 +2,7 @@
 
 **Live site:** [https://sebby1770.github.io/engineering-calculator-hub/](https://sebby1770.github.io/engineering-calculator-hub/)
 
-A commercial-ready engineering calculation workspace built with Next.js. Version 2.2 includes 47 deterministic calculators across 9 categories, a reproducible local-first project workspace, review-ready evidence exports, secure Pro cloud-sync architecture, Stripe subscriptions, and a smart math engine that shows its work.
+A commercial-ready engineering calculation workspace built with Next.js. Version 2.6 includes 67 deterministic calculators across 13 categories (mechanical, civil, thermofluids, materials, electrical, mathematics, calculus, geometry, linear algebra, physics, conversions, signals, and digital), a reproducible local-first project workspace, review-ready evidence exports, secure Pro cloud-sync architecture, Stripe subscriptions, and a smart math engine that shows its work. This release adds other engineering disciplines; it does **not** add new electrical calculators.
 
 The product strategy is deliberately simple: core formulas remain free and indexable; Pro monetizes the workflow around them through cloud backup, device-to-device recovery, and workflow convenience.
 
@@ -19,9 +19,13 @@ GitHub Pages hosts the browser tools at `/engineering-calculator-hub/`. Stripe c
 
 ## Features
 
-### Calculators (47 included)
+### Calculators (64 included)
 
-- **Electrical**: Ohm's Law (with steps), tolerance-aware E24 Voltage Divider Designer, Resistor Color Code, RC Time Constant, Power, Parallel/Series Resistors, LED Resistor Designer, PCB Trace Drop, Three-Phase Power, Battery Runtime, temperature-aware Wire Voltage Drop, and Regulator Thermal Designer
+- **Mechanical**: Simply supported beam (midspan point load), gear train, solid-shaft torsion, and helical compression spring (Wahl)
+- **Civil & Structural**: Manning rectangular channel, Euler buckling, rational runoff (Q = CiA/360), and rectangular section modulus
+- **Thermofluids**: Ideal-gas solver, Bernoulli velocity, Darcy–Weisbach, Carnot efficiency, and counterflow LMTD heat exchanger
+- **Materials & Chemical**: Reynolds number / regime, solution dilution, linear thermal expansion, and stress–strain with elastic modulus and safety factor
+- **Electrical**: Ohm's Law (with steps), tolerance-aware E24 Voltage Divider Designer, Resistor Color Code, RC Time Constant, Power, Parallel/Series Resistors, LED Resistor Designer, PCB Trace Drop, Three-Phase Power, Battery Runtime, temperature-aware Wire Voltage Drop, and Regulator Thermal Designer *(no new electrical tools in 2.3)*
 - **Mathematics**: Universal Calculator (smart mode), Equation Solver, Scientific Calculator, Log Calculator, Binary/Hex/Decimal Converter
 - **Calculus**: Derivative, Integral, Limit, ODE Solver, Taylor Series
 - **Geometry**: Triangle Solver, Circle, Pythagorean Theorem, 3D Volume, Distance
@@ -85,6 +89,8 @@ Supports:
 
 ### User Features
 
+- Global accessible calculator finder (`Cmd/Ctrl+K`) with ranked formula, unit, symbol, and multi-word search
+- Resilient favourites and recently viewed tools, surfaced as quick access on the home page
 - Copy result to clipboard
 - Share calculator via Web Share API or clipboard
 - Save favorites (localStorage)
@@ -97,6 +103,7 @@ Supports:
 ### Performance
 
 - Static page generation (SSG) for all calculator pages
+- Per-calculator lazy chunks so a route does not download every calculator implementation
 - Lazy-loaded ad units (IntersectionObserver)
 - Minimal JavaScript bundle
 - Font preloading
@@ -177,7 +184,9 @@ src/
 │   │   └── health/         # Health check
 │   └── [slug]/
 │       ├── page.tsx        # Dynamic calculator page (SSG + metadata)
-│       └── CalculatorPageClient.tsx  # Client component router
+│       ├── loading.tsx     # Route loading state
+│       ├── error.tsx       # Recoverable calculator error boundary
+│       └── CalculatorPageClient.tsx  # Lazy client component router
 ├── components/
 │   ├── ads/
 │   │   ├── AdUnit.tsx      # Core ad component (lazy loading, multi-provider)
@@ -192,6 +201,9 @@ src/
 │   │   ├── Header.tsx      # Navigation with categories and theme toggle
 │   │   ├── Footer.tsx      # SEO footer with internal links
 │   │   └── ThemeProvider.tsx
+│   ├── navigation/
+│   │   ├── CalculatorCommandPalette.tsx # Accessible global finder
+│   │   └── CalculatorQuickAccess.tsx    # Favourites and recents
 │   └── ui/
 │       ├── CalcInput.tsx   # Reusable number input with label/unit
 │       ├── CalcSelect.tsx  # Reusable select dropdown
@@ -201,9 +213,14 @@ src/
 │       └── FavoriteButton.tsx
 ├── data/
 │   ├── calculators.ts      # All calculator configs, FAQs, formulas
-│   └── categories.ts       # Category definitions
+│   ├── categories.ts       # Category definitions
+│   ├── disciplineCalculators.ts  # Mechanical / civil / thermofluids / materials tools
+│   └── professionalCalculators.ts
 ├── lib/
 │   ├── adConfig.ts         # Environment-based ad provider configuration
+│   ├── calculatorActivity.ts # Safe local favourites/recent state
+│   ├── calculatorSearch.ts # Ranked, symbol-aware search
+│   ├── disciplineCalculations.ts # SI formula kernels for the new bays
 │   └── site.ts             # Canonical site URL helpers
 └── types/
     └── index.ts            # TypeScript types
@@ -251,11 +268,14 @@ export default function YourCalc({
 3. **Register** in `src/app/[slug]/CalculatorPageClient.tsx`:
 
 ```typescript
-import YourCalc from "@/components/calculators/YourCalc";
+const YourCalc = dynamic(
+  () => import("@/components/calculators/YourCalc"),
+  { loading: CalculatorLoading },
+);
 
-const CALCULATOR_MAP = {
+const CALCULATOR_RENDERERS = {
   // ...existing
-  "your-calculator-slug": YourCalc,
+  "your-calculator-slug": (onResult) => <YourCalc onResult={onResult} />,
 };
 ```
 

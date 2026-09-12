@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
+import WorkspaceCloudSync from '@/components/workspace/WorkspaceCloudSync';
 import { getSupabaseBrowser } from '@/lib/supabaseClient';
 import {
   addProject,
@@ -16,13 +17,12 @@ import {
   readWorkspace,
   safeFileName,
   workspaceTemplates,
+  WORKSPACE_STORAGE_KEY,
   type ReviewStatus,
   type WorkspaceDocument,
   type WorkspaceProject,
   writeWorkspace,
 } from '@/lib/workspace';
-
-type SyncState = 'idle' | 'loading' | 'saving' | 'saved' | 'error';
 
 const reviewLabels: Record<ReviewStatus, string> = {
   draft: 'Draft',
@@ -60,15 +60,23 @@ export default function WorkspaceClient() {
   const [workspace, setWorkspace] = useState<WorkspaceDocument | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isPro, setIsPro] = useState(false);
-  const [syncState, setSyncState] = useState<SyncState>('idle');
-  const [syncMessage, setSyncMessage] = useState('');
   const [projectQuery, setProjectQuery] = useState('');
   const [showTemplates, setShowTemplates] = useState(false);
   const [backupMessage, setBackupMessage] = useState('');
   const importInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setWorkspace(readWorkspace());
+    const refresh = () => setWorkspace(readWorkspace());
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === WORKSPACE_STORAGE_KEY) refresh();
+    };
+    refresh();
+    window.addEventListener('engcalc:workspace-updated', refresh);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('engcalc:workspace-updated', refresh);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
 
   useEffect(() => {
@@ -127,7 +135,6 @@ export default function WorkspaceClient() {
       return false;
     }
     setWorkspace(next);
-    if (syncState === 'saved') setSyncState('idle');
     return true;
   };
 
@@ -214,42 +221,6 @@ export default function WorkspaceClient() {
       setBackupMessage(error instanceof Error ? error.message : 'The backup could not be imported.');
     } finally {
       if (importInputRef.current) importInputRef.current.value = '';
-    }
-  };
-
-  const syncCloud = async (direction: 'push' | 'pull') => {
-    if (!workspace || !session || !isPro) return;
-    if (
-      direction === 'pull' &&
-      totalCalculations > 0 &&
-      !window.confirm('Load the cloud copy and replace this device’s current workspace? Download a local backup first if you may need these changes.')
-    ) {
-      return;
-    }
-    setSyncState(direction === 'push' ? 'saving' : 'loading');
-    setSyncMessage('');
-    try {
-      const response = await fetch('/api/workspace', {
-        method: direction === 'push' ? 'PUT' : 'GET',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          ...(direction === 'push' ? { 'Content-Type': 'application/json' } : {}),
-        },
-        ...(direction === 'push' ? { body: JSON.stringify({ document: workspace }) } : {}),
-      });
-      const data = (await response.json().catch(() => null)) as
-        | { document?: unknown; error?: string }
-        | null;
-      if (!response.ok) throw new Error(data?.error || 'Cloud sync is unavailable.');
-      if (direction === 'pull' && data?.document) {
-        if (!isWorkspaceDocument(data.document)) throw new Error('The cloud copy is not valid.');
-        commit(data.document);
-      }
-      setSyncState('saved');
-      setSyncMessage(direction === 'push' ? 'Cloud copy updated.' : data?.document ? 'Cloud copy loaded.' : 'No cloud copy exists yet.');
-    } catch (error) {
-      setSyncState('error');
-      setSyncMessage(error instanceof Error ? error.message : 'Cloud sync failed.');
     }
   };
 
@@ -359,20 +330,12 @@ export default function WorkspaceClient() {
             {backupMessage && <p className="mt-2 px-2 text-xs leading-relaxed text-surface-500 dark:text-surface-400" role="status">{backupMessage}</p>}
           </div>
 
-          <div className="mt-5 border-t border-surface-200 pt-4 dark:border-surface-800">
-            <p className="px-2 text-xs font-bold uppercase tracking-[0.16em] text-surface-400">Cloud backup</p>
-            {!session ? (
-              <Link href="/account" className="mt-3 block rounded-lg border border-surface-200 px-3 py-2 text-center text-sm font-semibold text-surface-700 hover:bg-surface-50 dark:border-surface-700 dark:text-surface-200 dark:hover:bg-surface-800">Sign in to sync</Link>
-            ) : !isPro ? (
-              <Link href="/pricing" className="mt-3 block rounded-lg bg-brand-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-brand-700">Unlock Pro sync</Link>
-            ) : (
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => syncCloud('push')} disabled={syncState === 'saving'} className="rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-60">{syncState === 'saving' ? 'Saving…' : 'Save cloud'}</button>
-                <button type="button" onClick={() => syncCloud('pull')} disabled={syncState === 'loading'} className="rounded-lg border border-surface-300 px-3 py-2 text-xs font-semibold text-surface-700 hover:bg-surface-50 disabled:opacity-60 dark:border-surface-700 dark:text-surface-200 dark:hover:bg-surface-800">{syncState === 'loading' ? 'Loading…' : 'Load cloud'}</button>
-              </div>
-            )}
-            {syncMessage && <p className={`mt-2 px-2 text-xs ${syncState === 'error' ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`} role="status">{syncMessage}</p>}
-          </div>
+          <WorkspaceCloudSync
+            workspace={workspace}
+            session={session}
+            isPro={isPro}
+            onReplace={commit}
+          />
         </aside>
 
         <main className="min-w-0">

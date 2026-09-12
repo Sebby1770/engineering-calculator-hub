@@ -47,10 +47,13 @@ const sections: { title: string; paragraphs: React.ReactNode[] }[] = [
         subscription identifier, status, billing-period end, and cancellation state.
       </>,
       <>
-        Pro cloud sync is manual. Choosing “Save cloud” uploads the complete workspace document
-        shown in your browser; choosing “Load cloud” downloads the latest stored copy. Private
-        workspace tables are not directly accessible from the browser and every sync request is
-        authenticated and subscription-checked by our server.
+        After you link a workspace to your Pro account, changes made on the workspace page are
+        uploaded automatically after a short delay. Before the first upload, the app compares this
+        device with the account&apos;s cloud copy and asks you to resolve any difference; a meaningful
+        local workspace is never silently linked to an empty account. Superseded cloud copies are
+        retained as up to 50 recovery points for up to 30 days. Private workspace tables are not
+        directly accessible from the browser, and every sync or restore request is authenticated,
+        subscription-checked, size-limited, and revision-checked by our server.
       </>,
     ],
   },

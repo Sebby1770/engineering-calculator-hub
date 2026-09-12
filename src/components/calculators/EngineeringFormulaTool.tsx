@@ -113,7 +113,7 @@ export default function EngineeringFormulaTool({
       </div>
 
       <div className="mt-5 flex flex-wrap gap-3">
-        <button type="button" onClick={calculate} className="rounded-lg bg-brand-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-brand-700">
+        <button type="button" onClick={calculate} className="rounded-lg bg-forge-600 px-8 py-3 font-semibold text-white shadow-sm shadow-forge-500/20 transition-colors hover:bg-forge-700">
           Calculate design
         </button>
         <button type="button" onClick={reset} className="rounded-lg border border-surface-300 px-5 py-3 text-sm font-semibold text-surface-600 transition-colors hover:bg-surface-50 dark:border-surface-700 dark:text-surface-300 dark:hover:bg-surface-800">
@@ -135,12 +135,12 @@ export default function EngineeringFormulaTool({
                 key={output.label}
                 className={`rounded-xl border p-4 ${
                   output.emphasis
-                    ? 'border-brand-300 bg-brand-50 dark:border-brand-800 dark:bg-brand-950/40'
+                    ? 'border-forge-300 bg-forge-50 dark:border-forge-800 dark:bg-forge-900/30'
                     : 'border-surface-200 bg-surface-50 dark:border-surface-700 dark:bg-surface-800/50'
                 }`}
               >
                 <p className="text-xs font-semibold uppercase tracking-wider text-surface-400">{output.label}</p>
-                <p className={`mt-2 break-words font-mono text-xl font-bold ${output.emphasis ? 'text-brand-700 dark:text-brand-300' : 'text-surface-900 dark:text-white'}`}>
+                <p className={`mt-2 break-words font-mono text-xl font-bold ${output.emphasis ? 'text-forge-800 dark:text-forge-200' : 'text-surface-900 dark:text-white'}`}>
                   {output.value}{output.unit ? ` ${output.unit}` : ''}
                 </p>
               </div>

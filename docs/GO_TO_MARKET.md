@@ -1,6 +1,6 @@
 # Engineering Calculator Hub — Go-to-Market Plan
 
-Updated: 15 July 2026
+Updated: 10 August 2026
 
 ## Positioning
 
@@ -21,7 +21,7 @@ Updated: 15 July 2026
 | Plan | Launch offer | What it sells |
 | --- | ---: | --- |
 | Free | $0 | All deterministic calculators, worked steps, local projects, CSV/JSON/PDF-ready export |
-| Founding Pro | US$9/month | Secure cloud backup, up to 100 synced projects, device-to-device recovery, cloud-backed worksheets, priority requests |
+| Founding Pro | US$9/month | Conflict-safe cloud autosave, up to 100 synced projects, recent version recovery, device-to-device continuity, priority requests |
 | Annual Pro | Test US$72/year | Two months effectively free versus monthly; launch only after monthly conversion is proven |
 | Team | Target US$24/user/month | Add only after shared templates, review/approval, history, and branded reports ship |
 | Embed / Partner | From US$199/month + setup | White-label or attributed calculators for manufacturers, distributors, and engineering publishers |
@@ -34,7 +34,7 @@ Avoid lifetime pricing. It creates permanent support obligations without recurri
 2. **Activation:** a successful calculation with transparent steps and a relevant design warning.
 3. **Habit:** “Save to workspace” turns the result into a named project sheet.
 4. **Value moment:** the user adds a second calculation or note to the same project.
-5. **Signup:** offer cloud backup after meaningful local work exists.
+5. **Signup:** offer conflict-safe autosave and recovery after meaningful local work exists.
 6. **Paid conversion:** sell recovery and continuity, not access to a commodity formula.
 7. **Retention:** prompt users to reopen recent projects and add the next related calculation.
 

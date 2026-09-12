@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import Link from 'next/link';
 import { CalculatorConfig } from '@/types';
 import { getRelatedCalculators } from '@/data/calculators';
@@ -12,6 +12,7 @@ import CalculatorCard from '@/components/ui/CalculatorCard';
 import SaveToWorkspaceButton from '@/components/workspace/SaveToWorkspaceButton';
 import { AdBanner, AdSidebar, AdInContent, AdBetweenCards } from '@/components/ads';
 import type { CalculatorCapture } from '@/lib/workspace';
+import { recordRecentCalculator } from '@/lib/calculatorActivity';
 
 interface CalculatorLayoutProps {
   config: CalculatorConfig;
@@ -24,6 +25,10 @@ export default function CalculatorLayout({ config, result, evidence, children }:
   const { meta, formula, formulaExplanation, exampleUsage, faqs, relatedSlugs } = config;
   const related = getRelatedCalculators(relatedSlugs);
   const cat = categories.find((c) => c.id === meta.category);
+
+  useEffect(() => {
+    recordRecentCalculator(meta.slug);
+  }, [meta.slug]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
@@ -47,6 +52,11 @@ export default function CalculatorLayout({ config, result, evidence, children }:
         <div className="flex-1 min-w-0">
           {/* Title & actions */}
           <div className="mb-6">
+            {cat && (
+              <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.18em] text-forge-700 dark:text-forge-300">
+                {cat.name} bay · ECH-{cat.id.replace('_', '').slice(0, 4).toUpperCase()}-{meta.slug.split('-')[0].slice(0, 6).toUpperCase()}
+              </p>
+            )}
             <h1 className="font-display text-2xl sm:text-3xl font-bold text-surface-900 dark:text-white mb-2">
               {meta.shortTitle} Calculator
             </h1>
@@ -68,7 +78,13 @@ export default function CalculatorLayout({ config, result, evidence, children }:
           </div>
 
           {/* Calculator UI */}
-          <div className="rounded-xl border border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-5 sm:p-6 mb-8 shadow-sm">
+          <div className="plate plate-corners relative mb-8 overflow-hidden p-5 pl-6 sm:p-6 sm:pl-7">
+            <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-forge-300 via-forge-500 to-cyan-500" />
+            {formula && (
+              <p className="mb-4 font-mono text-xs text-forge-800 dark:text-cyan-200">
+                {formula}
+              </p>
+            )}
             {children}
             {result && (
               <div className="mt-5 border-t border-surface-200 pt-4 dark:border-surface-800">

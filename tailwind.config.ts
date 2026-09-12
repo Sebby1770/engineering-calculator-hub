@@ -32,6 +32,23 @@ const config: Config = {
           900: '#0f172a',
           950: '#020617',
         },
+        forge: {
+          50: '#fbf6ea',
+          100: '#f4e6c4',
+          200: '#e9ce8a',
+          300: '#d4b056',
+          400: '#c49a3c',
+          500: '#b08a2e',
+          600: '#8f6f24',
+          700: '#6f561d',
+          800: '#4d3c16',
+          900: '#2f250e',
+        },
+        paper: {
+          50: '#f4efe4',
+          100: '#e8dfcc',
+          200: '#d6c8a8',
+        },
       },
       fontFamily: {
         display: ['var(--font-display)', 'system-ui', 'sans-serif'],
@@ -44,6 +61,9 @@ const config: Config = {
         'slide-in-right': 'slideInRight 0.3s ease-out',
         'gradient-x': 'gradientX 6s ease infinite',
         'float-slow': 'floatSlow 14s ease-in-out infinite alternate',
+        'grid-shift': 'gridShift 36s linear infinite',
+        marquee: 'marquee 42s linear infinite',
+        compass: 'compass 80s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -65,6 +85,18 @@ const config: Config = {
         floatSlow: {
           '0%': { transform: 'translate3d(0, 0, 0)' },
           '100%': { transform: 'translate3d(0, -18px, 0)' },
+        },
+        gridShift: {
+          '0%': { backgroundPosition: '0 0, 0 0, 0 0, 0 0' },
+          '100%': { backgroundPosition: '112px 194px, 112px 194px, 40px 40px, 40px 40px' },
+        },
+        marquee: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+        compass: {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
         },
       },
     },

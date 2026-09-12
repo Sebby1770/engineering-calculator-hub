@@ -14,34 +14,35 @@ export default function CalculatorCard({ meta, formula }: CalculatorCardProps) {
   return (
     <Link
       href={`/${meta.slug}`}
-      className="group relative flex flex-col rounded-lg border border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-5 hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-lg hover:shadow-brand-500/5 hover:-translate-y-0.5 transition-all duration-200"
+      className="plate plate-corners card-sheen group relative flex flex-col overflow-hidden p-5 pl-6 transition-all duration-200 hover:-translate-y-0.5"
     >
+      <span className="screw right-2 top-2 hidden sm:block" />
       {meta.new && (
-        <span className="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400">
+        <span className="absolute top-3 right-3 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
           New
         </span>
       )}
       <div
-        className={`w-10 h-10 rounded-lg bg-gradient-to-br ${iconGradient} flex items-center justify-center text-lg font-mono font-bold text-white mb-3 shadow-sm`}
+        className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${iconGradient} font-mono text-lg font-bold text-white shadow-sm`}
       >
         {meta.icon}
       </div>
-      <h3 className="font-display font-semibold text-surface-900 dark:text-white mb-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+      <h3 className="mb-1 font-display font-semibold text-surface-900 transition-colors group-hover:text-forge-700 dark:text-white dark:group-hover:text-forge-300">
         {meta.shortTitle}
       </h3>
-      <p className="text-sm text-surface-500 dark:text-surface-400 leading-relaxed line-clamp-2">
+      <p className="text-sm leading-relaxed text-surface-500 line-clamp-2 dark:text-surface-400">
         {meta.description.split('.')[0]}.
       </p>
       {formula && (
-        <div className="mt-auto pt-3">
-          <code className="inline-block max-w-full truncate rounded-md bg-surface-50 dark:bg-surface-800/70 border border-surface-200 dark:border-surface-700 px-2 py-1 font-mono text-xs text-surface-600 dark:text-surface-300">
+        <div className="mt-auto -mx-5 -mb-5 ml-[-1.5rem] border-t border-forge-500/20 bg-surface-50/90 px-6 py-2 dark:border-forge-400/15 dark:bg-surface-950/60">
+          <code className="block max-w-full truncate font-mono text-[11px] text-forge-800 dark:text-cyan-200">
             {formula}
           </code>
         </div>
       )}
       <span
         aria-hidden="true"
-        className="absolute bottom-4 right-4 text-brand-500 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
+        className="absolute bottom-4 right-4 -translate-x-1 text-forge-500 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <path d="M5 12h14M13 6l6 6-6 6" />

@@ -12,15 +12,15 @@ Last reviewed: 2026-08-10
 
 ## Security boundaries
 
-- Calculator inputs run locally. They reach the backend only if a user deliberately saves a
-  result to Pro cloud sync.
+- Calculator inputs run locally. They reach the backend only after a user deliberately links the
+  workspace to Pro cloud sync; linked workspace changes then autosave after a short delay.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are publishable browser
   configuration, not secrets. Database security never depends on hiding them.
 - `SUPABASE_SECRET_KEY` (or legacy `SUPABASE_SERVICE_ROLE_KEY`), `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET` are server-only.
   They must live in Vercel encrypted environment variables or an ignored `.env.local` file and
   must never use a `NEXT_PUBLIC_` prefix.
 - Server database modules import `server-only`, and the privileged REST helper accepts only the
-  five explicitly listed application tables. Opaque `sb_secret_...` keys are never placed in the
+  six explicitly listed application tables. Opaque `sb_secret_...` keys are never placed in the
   bearer-token header; legacy service-role JWTs remain supported during rotation.
 - Card details are entered on Stripe-hosted pages and never pass through this application.
 
@@ -49,6 +49,8 @@ Last reviewed: 2026-08-10
   request bodies.
 - Pro authorization requires both an active/trialing Stripe status and the exact configured Pro
   price ID.
+- Workspace writes use monotonic server revisions. A stale device receives a conflict response
+  with its local data untouched; identical retries reconcile without creating duplicate history.
 
 ### Stripe
 
@@ -75,14 +77,17 @@ The migrations in `supabase/migrations/` version all commercial tables:
 - `profiles` — server-managed account and Stripe entitlement state
 - `stripe_events` — verified webhook inbox and processing status, without full event payloads
 - `workspace_documents` — one validated cloud document per Pro user
+- `workspace_document_versions` — superseded recovery snapshots, limited to 50 per user and 30 days
 - `donations` — idempotent one-off Stripe payment records
 - `feedback` — validated product feedback and optional reply address
 
-All five tables have RLS enabled and forced, with client grants revoked and no browser policies.
+All six tables have RLS enabled and forced, with client grants revoked and no browser policies.
 Only the server-side service role receives explicit table privileges. Constraints cover supported
 subscription states, text lengths, currency shape, and non-negative payment amounts. Frequently
 filtered and retention/audit columns are indexed. A locked `SECURITY DEFINER` trigger creates the
-private profile row when Supabase Auth creates a user.
+private profile row when Supabase Auth creates a user. Workspace triggers assign server timestamps,
+enforce monotonic revisions, and atomically archive the replaced document. The service role can
+read history but cannot insert, update, or delete history rows directly.
 
 Default privileges for future `public` tables, sequences, and functions are revoked from Data API
 roles. PostgreSQL's built-in public function execution default is global, so future functions
@@ -156,8 +161,9 @@ curl -I http://localhost:3000
 ```
 
 Also test: sign-in redirect, upgrade, duplicate upgrade prevention, webhook retry, cancellation,
-portal return, cloud save/load, cross-account isolation, oversized payload rejection, a foreign
-Origin request, data export, and an account/data deletion request.
+portal return, cloud autosave, simultaneous-write conflict, keep-both resolution, version restore,
+cross-account isolation, oversized payload rejection, a foreign Origin request, data export, and
+an account/data deletion request.
 
 No checklist can guarantee that a service will never be compromised or sued. The objective is to
 reduce likelihood and impact, keep claims honest, and make failures observable and recoverable.

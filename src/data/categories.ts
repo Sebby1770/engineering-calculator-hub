@@ -5,6 +5,34 @@ import { CategoryInfo } from "@/types";
 // fallbacks only (kept for data completeness; not rendered in the UI).
 export const categories: CategoryInfo[] = [
   {
+    id: "mechanical",
+    name: "Mechanical Engineering",
+    description: "Beams, gears, shafts, springs, and machine-element formulas",
+    icon: "M",
+    color: "from-orange-500 to-amber-700",
+  },
+  {
+    id: "civil",
+    name: "Civil & Structural",
+    description: "Open-channel flow, buckling, runoff, and section properties",
+    icon: "C",
+    color: "from-stone-500 to-zinc-700",
+  },
+  {
+    id: "thermofluids",
+    name: "Thermofluids",
+    description: "Ideal gas, Bernoulli, pipe friction, Carnot, and heat exchangers",
+    icon: "T",
+    color: "from-cyan-500 to-sky-700",
+  },
+  {
+    id: "materials",
+    name: "Materials & Chemical",
+    description: "Reynolds number, dilution, thermal expansion, and stress–strain",
+    icon: "χ",
+    color: "from-teal-500 to-emerald-700",
+  },
+  {
     id: "electrical",
     name: "Electrical Engineering",
     description: "Circuit analysis, resistors, power, and voltage calculations",

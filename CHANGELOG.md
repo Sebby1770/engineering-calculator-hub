@@ -2,6 +2,34 @@
 
 All notable changes to Engineering Calculator Hub are documented in this file.
 
+## Unreleased
+
+## [2.6.0] - 2026-09-13
+
+### Changed
+- About, pricing, 404, and calculator stamps now use the same drafting-plate chrome as the homepage.
+
+## [2.5.0] - 2026-09-13
+
+### Changed
+- Homepage and chrome restyled as a **drafting-plate workshop**: warm paper stock, mill-finished plates with corner ticks and screws, Syne display type, a live compass rose, and a scrolling formula ticker. Search, bays, and calculators are unchanged.
+
+## [2.4.0] - 2026-09-13
+
+### Added
+- Four new workshop bays — **Mechanical**, **Civil & Structural**, **Thermofluids**, and **Materials & Chemical** — with 20 deterministic SI formula tools (beam, gear train, shaft torsion, helical spring, pump power, principal stress, Manning, Euler buckling, rational runoff, section modulus, ideal gas, Bernoulli, Darcy–Weisbach, Carnot, LMTD, convection, Reynolds, dilution, thermal expansion, stress–strain). No new electrical calculators in this round.
+- Pump power (ρgQH), 2D Mohr principal stress, and Newton convection calculators with reference-case tests.
+- Accessible global `Cmd/Ctrl+K` calculator finder with ranked multi-word, formula, unit, and engineering-symbol search.
+- Resilient local favourites and recently viewed calculators, with home-page quick access and malformed-storage recovery.
+- Calculator route loading and error states plus live result announcements and clearer button semantics.
+- Regression tests for search ranking, activity ordering, deduplication, limits, and storage recovery.
+- Reference-case tests for beam deflection, Euler Pcr, Carnot efficiency, Reynolds number, Manning discharge, dilution, and 2:1 gear torque.
+
+### Changed
+- Homepage, calculator cards, footer, and site metadata now present a multi-discipline **instrument workshop** (isometric blueprint grid, brass/cyan accents, mixed-discipline featured tools) instead of an electrical-only identity.
+- Split calculator implementations into statically analyzable lazy chunks so each route loads only the selected tool.
+- Derive public calculator counts from the source catalogue instead of stale hard-coded metadata.
+
 ## [2.2.0] - 2026-08-20
 
 ### Added

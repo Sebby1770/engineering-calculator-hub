@@ -13,7 +13,13 @@ import { buildSupabaseRestHeaders } from '@/lib/supabaseApiKey';
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVER_API_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-type TableName = 'donations' | 'feedback' | 'profiles' | 'stripe_events' | 'workspace_documents';
+type TableName =
+  | 'donations'
+  | 'feedback'
+  | 'profiles'
+  | 'stripe_events'
+  | 'workspace_documents'
+  | 'workspace_document_versions';
 
 export function isSupabaseConfigured() {
   return Boolean(SUPABASE_URL && SERVER_API_KEY);
@@ -161,11 +167,16 @@ export async function patchRowsReturning<T = Record<string, unknown>>(
 export async function selectRows<T = Record<string, unknown>>(
   table: TableName,
   match: Record<string, string>,
-  columns = '*'
+  columns = '*',
+  options: { order?: string; limit?: number } = {},
 ): Promise<T[] | null> {
   const params: Record<string, string> = { select: columns };
   for (const [column, value] of Object.entries(match)) {
     params[column] = `eq.${value}`;
+  }
+  if (options.order) params.order = options.order;
+  if (options.limit !== undefined) {
+    params.limit = String(Math.max(1, Math.min(100, Math.trunc(options.limit))));
   }
   const { ok, json } = await restRequest('GET', table, params, undefined, '');
   return ok && Array.isArray(json) ? (json as T[]) : null;
