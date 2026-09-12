@@ -4,6 +4,11 @@ All notable changes to Engineering Calculator Hub are documented in this file.
 
 ## Unreleased
 
+## [2.6.0] - 2026-09-13
+
+### Changed
+- About, pricing, 404, and calculator stamps now use the same drafting-plate chrome as the homepage.
+
 ## [2.5.0] - 2026-09-13
 
 ### Changed

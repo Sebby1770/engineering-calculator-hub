@@ -54,7 +54,7 @@ export default function CalculatorLayout({ config, result, evidence, children }:
           <div className="mb-6">
             {cat && (
               <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.18em] text-forge-700 dark:text-forge-300">
-                {cat.name} bay
+                {cat.name} bay · ECH-{cat.id.replace('_', '').slice(0, 4).toUpperCase()}-{meta.slug.split('-')[0].slice(0, 6).toUpperCase()}
               </p>
             )}
             <h1 className="font-display text-2xl sm:text-3xl font-bold text-surface-900 dark:text-white mb-2">

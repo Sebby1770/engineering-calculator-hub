@@ -27,23 +27,22 @@ const comparison = [
 export default function PricingPage() {
   return (
     <div className="overflow-hidden">
-      <section className="relative border-b border-surface-200 bg-surface-950 text-white dark:border-surface-800">
-        <div className="absolute inset-0 bg-grid-pattern opacity-30" aria-hidden="true" />
-        <div className="absolute left-1/2 top-0 h-96 w-96 -translate-x-1/2 rounded-full bg-brand-500/20 blur-3xl" aria-hidden="true" />
+      <section className="relative overflow-hidden border-b border-forge-800 bg-forge-900 text-paper-50">
+        <div className="absolute inset-0 bg-iso-blueprint opacity-40" aria-hidden="true" />
         <div className="relative mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-brand-300">Simple founding pricing</p>
-          <h1 className="mx-auto mt-4 max-w-4xl font-display text-4xl font-bold tracking-tight sm:text-6xl">
-            The formulas stay free. Pro pays for the engineering workflow.
+          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-forge-200">ECH · founding price list</p>
+          <h1 className="mx-auto mt-4 max-w-4xl font-display text-4xl font-extrabold tracking-tight sm:text-6xl">
+            The formulas stay free. Pro pays for the workflow.
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-surface-300">
-            Calculate without an account. Upgrade when you need cloud-backed projects, reusable design work, and review-ready outputs.
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-paper-100/80">
+            Calculate without an account. Upgrade when you need cloud-backed projects, reusable design work, and review-ready sheets.
           </p>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-3">
-          <article className="rounded-3xl border border-surface-200 bg-white p-7 shadow-sm dark:border-surface-800 dark:bg-surface-900">
+          <article className="plate plate-corners p-7">
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-surface-400">Free</p>
             <div className="mt-4 flex items-end gap-2">
               <span className="font-display text-5xl font-bold text-surface-950 dark:text-white">$0</span>
@@ -62,7 +61,7 @@ export default function PricingPage() {
             </Link>
           </article>
 
-          <article className="relative rounded-3xl border-2 border-brand-500 bg-white p-7 shadow-2xl shadow-brand-500/15 dark:bg-surface-900">
+          <article className="plate plate-corners relative border-forge-700 p-7 shadow-[6px_6px_0_0_rgb(176,138,46)]">
             <div className="absolute right-5 top-5 rounded-full bg-brand-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-700 dark:bg-brand-950 dark:text-brand-300">Best for individuals</div>
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand-600 dark:text-brand-400">Pro</p>
             <div className="mt-4 flex items-end gap-2">
@@ -88,7 +87,7 @@ export default function PricingPage() {
             <p className="mt-3 text-center text-xs text-surface-400">Secure checkout and self-service cancellation through Stripe.</p>
           </article>
 
-          <article className="rounded-3xl border border-surface-200 bg-surface-50 p-7 dark:border-surface-800 dark:bg-surface-950/50">
+          <article className="plate plate-corners p-7">
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-surface-400">Teams & embeds</p>
             <div className="mt-4 font-display text-4xl font-bold text-surface-950 dark:text-white">Coming next</div>
             <p className="mt-4 text-sm leading-relaxed text-surface-500 dark:text-surface-400">
@@ -132,13 +131,13 @@ export default function PricingPage() {
           </div>
         </div>
 
-        <div className="mt-20 grid gap-8 rounded-3xl bg-surface-950 p-8 text-white sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div className="mt-20 grid gap-8 border border-forge-800 bg-forge-900 p-8 text-paper-50 sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-300">Try the workflow first</p>
-            <h2 className="mt-3 font-display text-3xl font-bold">Build a calculation sheet before creating an account.</h2>
-            <p className="mt-3 max-w-2xl text-surface-300">The workspace saves locally on your device. Upgrade when automatic cloud continuity, conflict protection, and recent recovery points become useful.</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-forge-200">Try the workflow first</p>
+            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight">Build a sheet before creating an account.</h2>
+            <p className="mt-3 max-w-2xl text-paper-100/80">The workspace saves locally on your device. Upgrade when automatic cloud continuity, conflict protection, and recent recovery points become useful.</p>
           </div>
-          <Link href="/workspace" className="inline-flex justify-center rounded-xl bg-white px-6 py-3 text-sm font-bold text-surface-950 hover:bg-brand-50">
+          <Link href="/workspace" className="inline-flex justify-center bg-paper-50 px-6 py-3 text-sm font-bold text-forge-900 shadow-[4px_4px_0_0_rgb(212,176,86)]">
             Open Engineering Workspace
           </Link>
         </div>

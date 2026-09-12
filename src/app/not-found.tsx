@@ -6,18 +6,19 @@ export default function NotFound() {
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-16 text-center">
-      <div className="mb-4 font-mono text-8xl font-bold text-surface-200 dark:text-surface-800">404</div>
-      <h1 className="mb-2 font-display text-2xl font-bold text-surface-900 dark:text-white">
-        Calculator Not Found
+      <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-forge-700 dark:text-cyan-300">Plate missing</p>
+      <div className="mb-4 font-display text-8xl font-extrabold text-forge-800/20 dark:text-cyan-200/15">404</div>
+      <h1 className="mb-2 font-display text-3xl font-extrabold text-surface-900 dark:text-white">
+        That plate is not on this bench
       </h1>
       <p className="mb-6 max-w-md text-surface-500 dark:text-surface-400">
-        The page you&apos;re looking for doesn&apos;t exist or may have been moved.
+        The calculator you asked for is not in the catalogue, or the stamp has moved.
       </p>
       <Link
         href="/"
-        className="rounded-lg bg-brand-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-700"
+        className="bg-forge-800 px-6 py-3 font-bold text-paper-50 shadow-[4px_4px_0_0_rgb(176,138,46)] transition hover:translate-x-px hover:translate-y-px"
       >
-        ← Back to All Calculators
+        Back to the workshop
       </Link>
 
       {popular.length > 0 && (

@@ -23,11 +23,11 @@ export default function AboutPage() {
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="space-y-10">
         <section>
-          <p className="text-sm font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">
-            About
+          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-forge-700 dark:text-cyan-300">
+            ECH · about the bench
           </p>
-          <h1 className="mt-2 font-display text-3xl font-bold text-surface-900 dark:text-white">
-            Engineering calculations that stay transparent and connected
+          <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-surface-900 dark:text-white">
+            Calculations that stay transparent and connected
           </h1>
           <p className="mt-4 leading-relaxed text-surface-600 dark:text-surface-400">
             Engineering Calculator Hub is built for students, engineers, makers, and anyone who
@@ -45,7 +45,7 @@ export default function AboutPage() {
             ['Local-first', 'Calculations and project sheets stay on your device unless you explicitly link optional Pro cloud sync.'],
             ['Open', 'The entire site is open source under the MIT licence — read it, audit it, contribute.'],
           ].map(([title, body]) => (
-            <div key={title} className="rounded-lg border border-surface-200 p-5 dark:border-surface-800">
+            <div key={title} className="plate plate-corners p-5">
               <h2 className="font-display font-semibold text-surface-900 dark:text-white">{title}</h2>
               <p className="mt-2 text-sm leading-relaxed text-surface-600 dark:text-surface-400">{body}</p>
             </div>
@@ -63,7 +63,7 @@ export default function AboutPage() {
                 <Link
                   key={category.id}
                   href={`/?category=${category.id}`}
-                  className="flex items-center gap-3 rounded-lg border border-surface-200 p-4 transition-colors hover:border-brand-300 dark:border-surface-800 dark:hover:border-brand-700"
+                  className="plate flex items-center gap-3 p-4 transition hover:-translate-y-0.5"
                 >
                   <div
                     className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${category.color} text-white`}
