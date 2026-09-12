@@ -6,7 +6,7 @@ import { PRO_PRICE_CONTRACT } from '@/lib/stripeEntitlements';
 export const metadata: Metadata = {
   title: 'Pricing – Free Calculators and Engineering Workspace Pro',
   description:
-    'Use every engineering calculator free. Upgrade to Pro for secure cloud projects, device-to-device recovery, and cloud-backed professional calculation sheets.',
+    'Use every engineering calculator free. Upgrade to Pro for conflict-safe cloud autosave, version recovery, and cloud-backed professional calculation sheets.',
 };
 
 const comparison = [
@@ -16,8 +16,9 @@ const comparison = [
   ['Guided engineering project templates', true, true],
   ['Local backup/import and project duplication', true, true],
   ['CSV, JSON, and review-ready PDF export', true, true],
-  ['Secure cloud workspace backup', false, true],
+  ['Conflict-safe cloud autosave', false, true],
   ['Sync up to 100 projects', false, true],
+  ['Up to 50 recovery points from the last 30 days', false, true],
   ['Cloud-backed design worksheets', false, true],
   ['Restore projects on another device', false, true],
   ['Priority feature requests', false, true],
@@ -77,7 +78,7 @@ export default function PricingPage() {
               For engineers who want their calculations organised, backed up, and ready to review.
             </p>
             <ul className="mt-6 space-y-3 text-sm text-surface-700 dark:text-surface-300">
-              {['Everything in Free', 'Secure cloud workspace backup', 'Sync up to 100 design projects', 'Restore work on another device', 'Cloud-backed evidence packs', 'Priority feature requests'].map((feature) => (
+              {['Everything in Free', 'Conflict-safe cloud autosave', 'Sync up to 100 design projects', 'Recent version recovery', 'Restore work on another device', 'Cloud-backed evidence packs', 'Priority feature requests'].map((feature) => (
                 <li key={feature} className="flex gap-2"><span className="text-brand-500">✓</span>{feature}</li>
               ))}
             </ul>
@@ -135,7 +136,7 @@ export default function PricingPage() {
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-300">Try the workflow first</p>
             <h2 className="mt-3 font-display text-3xl font-bold">Build a calculation sheet before creating an account.</h2>
-            <p className="mt-3 max-w-2xl text-surface-300">The workspace saves locally on your device. Upgrade only when cloud backup and synced projects become useful.</p>
+            <p className="mt-3 max-w-2xl text-surface-300">The workspace saves locally on your device. Upgrade when automatic cloud continuity, conflict protection, and recent recovery points become useful.</p>
           </div>
           <Link href="/workspace" className="inline-flex justify-center rounded-xl bg-white px-6 py-3 text-sm font-bold text-surface-950 hover:bg-brand-50">
             Open Engineering Workspace

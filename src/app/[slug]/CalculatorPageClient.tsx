@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { getCalculatorBySlug } from "@/data/calculators";
+import { getCalculatorBySlug, getEngineeringToolBySlug } from "@/data/calculators";
 import CalculatorLayout from "@/components/calculators/CalculatorLayout";
 import ProGate from "@/components/billing/ProGate";
-
-import { getEngineeringToolBySlug } from "@/data/professionalCalculators";
 import type { CalculatorCapture } from "@/lib/workspace";
 
 function CalculatorLoading() {

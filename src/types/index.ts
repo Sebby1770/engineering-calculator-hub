@@ -1,4 +1,8 @@
 export type Category =
+  | "mechanical"
+  | "civil"
+  | "thermofluids"
+  | "materials"
   | "electrical"
   | "mathematics"
   | "calculus"

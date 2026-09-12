@@ -2,6 +2,34 @@ import type { Category } from "@/types";
 
 // Formal line icons (no emoji) for the engineering categories.
 const PATHS: Record<Category, React.ReactNode> = {
+  mechanical: (
+    <>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 3.2v2.2M12 18.6v2.2M3.2 12h2.2M18.6 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M5.4 18.6l1.6-1.6M17 7l1.6-1.6" />
+    </>
+  ),
+  civil: (
+    <>
+      <path d="M4 20V7l8-3 8 3v13" />
+      <path d="M4 20h16" />
+      <path d="M10 20v-6h4v6" />
+      <path d="M8 10h.01M16 10h.01" />
+    </>
+  ),
+  thermofluids: (
+    <>
+      <path d="M12 3v10" />
+      <circle cx="12" cy="17" r="3" />
+      <path d="M4 8c2 2 3.5 2 5.5 0s3.5-2 5.5 0 3.5 2 5 0" />
+    </>
+  ),
+  materials: (
+    <>
+      <path d="M9 3h6" />
+      <path d="M10 3v6L5.8 17.2A3.2 3.2 0 008.6 22h6.8a3.2 3.2 0 002.8-4.8L14 9V3" />
+      <path d="M8.5 14.5h7" />
+    </>
+  ),
   electrical: <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />,
   mathematics: (
     <path d="M18 4H8.6a.6.6 0 00-.46.98L14 12l-5.86 7.02a.6.6 0 00.46.98H18" />

@@ -42,7 +42,7 @@ export default function AboutPage() {
         <section className="grid gap-4 sm:grid-cols-3">
           {[
             ['Fast', 'Every page is statically generated and the math runs instantly in your browser.'],
-            ['Local-first', 'Calculations and project sheets stay on your device unless you explicitly use optional Pro cloud sync.'],
+            ['Local-first', 'Calculations and project sheets stay on your device unless you explicitly link optional Pro cloud sync.'],
             ['Open', 'The entire site is open source under the MIT licence — read it, audit it, contribute.'],
           ].map(([title, body]) => (
             <div key={title} className="rounded-lg border border-surface-200 p-5 dark:border-surface-800">
@@ -102,7 +102,7 @@ export default function AboutPage() {
             >
               GitHub
             </a>
-            . If the workflow saves you time, Pro adds secure cloud backup and device-to-device recovery.
+            . If the workflow saves you time, Pro adds conflict-safe autosave, recent version recovery, and device-to-device continuity.
           </p>
           <Link
             href="/workspace"

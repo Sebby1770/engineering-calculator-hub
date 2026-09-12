@@ -52,6 +52,11 @@ export default function CalculatorLayout({ config, result, evidence, children }:
         <div className="flex-1 min-w-0">
           {/* Title & actions */}
           <div className="mb-6">
+            {cat && (
+              <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.18em] text-forge-700 dark:text-forge-300">
+                {cat.name} bay
+              </p>
+            )}
             <h1 className="font-display text-2xl sm:text-3xl font-bold text-surface-900 dark:text-white mb-2">
               {meta.shortTitle} Calculator
             </h1>
@@ -73,7 +78,13 @@ export default function CalculatorLayout({ config, result, evidence, children }:
           </div>
 
           {/* Calculator UI */}
-          <div className="rounded-xl border border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900 p-5 sm:p-6 mb-8 shadow-sm">
+          <div className="relative mb-8 overflow-hidden rounded-xl border border-forge-400/25 bg-white p-5 pl-6 shadow-sm sm:p-6 sm:pl-7 dark:border-forge-500/20 dark:bg-surface-900">
+            <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-forge-300 via-forge-500 to-cyan-500" />
+            {formula && (
+              <p className="mb-4 font-mono text-xs text-forge-800 dark:text-cyan-200">
+                {formula}
+              </p>
+            )}
             {children}
             {result && (
               <div className="mt-5 border-t border-surface-200 pt-4 dark:border-surface-800">

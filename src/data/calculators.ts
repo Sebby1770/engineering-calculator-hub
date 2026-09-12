@@ -1,7 +1,11 @@
 import { CalculatorConfig } from "@/types";
 import { advancedCalculators } from "@/data/advancedCalculators";
 import { digitalCalculators } from "@/data/digitalCalculators";
-import { professionalCalculatorConfigs } from "@/data/professionalCalculators";
+import { disciplineCalculatorConfigs, getDisciplineToolBySlug } from "@/data/disciplineCalculators";
+import {
+  professionalCalculatorConfigs,
+  getEngineeringToolBySlug as getProfessionalEngineeringTool,
+} from "@/data/professionalCalculators";
 
 const baseCalculators: CalculatorConfig[] = [
   // ─── ELECTRICAL ──────────────────────────────────────────
@@ -636,7 +640,12 @@ export const calculators: CalculatorConfig[] = [
   ...advancedCalculators,
   ...professionalCalculatorConfigs,
   ...digitalCalculators,
+  ...disciplineCalculatorConfigs,
 ];
+
+export function getEngineeringToolBySlug(slug: string) {
+  return getProfessionalEngineeringTool(slug) ?? getDisciplineToolBySlug(slug);
+}
 
 export function getCalculatorBySlug(
   slug: string,
